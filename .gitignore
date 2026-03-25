@@ -1,0 +1,11 @@
+# Environment variables
+.env.local
+.envrc.local
+
+# Data (raw API responses are large)
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
