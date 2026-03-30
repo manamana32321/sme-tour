@@ -9,7 +9,7 @@ AIRPORTS = {
     "DE": {"country": "Germany", "country_kr": "독일", "city": "Berlin", "city_kr": "베를린", "iata": "BER"},
     "NL": {"country": "Netherlands", "country_kr": "네덜란드", "city": "Amsterdam", "city_kr": "암스테르담", "iata": "AMS"},
     "BE": {"country": "Belgium", "country_kr": "벨기에", "city": "Brussels", "city_kr": "브뤼셀", "iata": "BRU"},
-    "TR": {"country": "Turkey", "country_kr": "터키", "city": "Istanbul", "city_kr": "이스탄불", "iata": "IST"},
+    "DK": {"country": "Denmark", "country_kr": "덴마크", "city": "Copenhagen", "city_kr": "코펜하겐", "iata": "CPH"},
     "PL": {"country": "Poland", "country_kr": "폴란드", "city": "Warsaw", "city_kr": "바르샤바", "iata": "WAW"},
     "ES": {"country": "Spain", "country_kr": "스페인", "city": "Barcelona", "city_kr": "바르셀로나", "iata": "BCN"},
     "PT": {"country": "Portugal", "country_kr": "포르투갈", "city": "Lisbon", "city_kr": "리스본", "iata": "LIS"},
