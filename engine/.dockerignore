@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Raw API data (only processed CSVs needed in image)
+data/raw/
+
+# Tests don't need to be in production image
+tests/
+
+# Collectors run offline, not in production image
+collectors/
+
+# Docs/metadata
+*.md
+!README.md
