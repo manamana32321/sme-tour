@@ -33,7 +33,7 @@ def load_api_key() -> str:
     if key:
         return key
 
-    env_file = Path(__file__).parent.parent / ".env.local"
+    env_file = Path(__file__).parent.parent.parent / ".env.local"
     if env_file.exists():
         for line in env_file.read_text().splitlines():
             line = line.strip()

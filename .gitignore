@@ -3,9 +3,21 @@
 .envrc.local
 
 # Data (raw API responses are large)
-data/raw/
+engine/data/raw/
 
 # Python
 __pycache__/
 *.pyc
 .venv/
+*.egg-info/
+dist/
+build/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env.local
+
+# K8s local drafts (never commit plaintext secrets)
+k8s/secret-template-*.yaml
