@@ -48,7 +48,6 @@ ignore = ["E501"]  # line too long — handled by formatter
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-asyncio_mode = "auto"
 
 [tool.mypy]
 python_version = "3.12"

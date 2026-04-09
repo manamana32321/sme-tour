@@ -21,3 +21,5 @@ frontend/.env.local
 
 # K8s local drafts (never commit plaintext secrets)
 k8s/secret-template-*.yaml
+engine/.venv/
+engine/.pytest_cache/
