@@ -31,9 +31,9 @@ export function OptimizeForm(props: OptimizeFormProps) {
         <BudgetSlider value={props.budget_won} onChange={props.onBudgetChange} />
         <DeadlineSlider value={props.deadline_days} onChange={props.onDeadlineChange} />
         <WeightSlider value={props.w_cost} onChange={props.onWeightChange} />
-        <CountrySelect value={props.required_countries} onChange={props.onCountriesChange} />
+        <CountrySelect value={props.required_countries} onApply={props.onCountriesChange} />
         <p className="text-xs text-muted-foreground text-center">
-          변경 시 자동 재계산
+          슬라이더 변경 시 자동 재계산 · 국가 변경은 "적용" 클릭
         </p>
       </CardContent>
     </Card>
