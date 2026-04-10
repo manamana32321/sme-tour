@@ -1,0 +1,157 @@
+country,origin_node,destination_node,option_id,transport_mode,price_won,duration_hours,duration_min
+FR,CDG,NCE_City,1,TGV INOUI(Train),50000,6.7,402
+FR,CDG,NCE_City,2,BlaBlaCar Bus(Bus),45000,13.8,828
+FR,NCE_City,CDG,1,TGV INOUI(Train),61000,6.7,402
+FR,NCE_City,CDG,2,FlixBus(Bus),82000,14.1,846
+FR,CDG,LYS_City,1,TGV INOUI(Train),28000,2.7,162
+FR,CDG,LYS_City,2,BlaBlaCar Bus(Bus),10000,6.3,378
+FR,LYS_City,CDG,1,TGV INOUI(Train),28000,2.7,162
+FR,LYS_City,CDG,2,FlixBus(Bus),22000,6.2,372
+FR,NCE_City,LYS_City,1,TGV INOUI(Train),33000,5.5,330
+FR,NCE_City,LYS_City,2,BlaBlaCar Bus(Bus),26000,7.8,468
+FR,LYS_City,NCE_City,1,TGV INOUI(Train),50000,5.6,336
+FR,LYS_City,NCE_City,2,BlaBlaCar Bus(Bus),26000,7.7,462
+IT,FCO,FLR_City,1,Italo(Train),26000,2.4,144
+IT,FCO,FLR_City,2,Itabus(Bus),10000,4.2,252
+IT,FLR_City,FCO,1,Italo(Train),26000,2.4,144
+IT,FLR_City,FCO,2,Itabus(Bus),12000,4.1,246
+IT,FCO,VCE_City,1,Italo(Train),52000,4.6,276
+IT,FCO,VCE_City,2,FlixBus(Bus),22000,7.8,468
+IT,VCE_City,FCO,1,Italo(Train),52000,4.3,258
+IT,VCE_City,FCO,2,FlixBus(Bus),23000,7.7,462
+IT,FLR_City,VCE_City,1,Italo(Train),19000,3,180
+IT,FLR_City,VCE_City,2,Itabus(Bus),10000,4.4,264
+IT,VCE_City,FLR_City,1,Italo(Train),33000,3,180
+IT,VCE_City,FLR_City,2,Itabus(Bus),16000,4.6,276
+CH,ZRH,Lucerne_City,1,SBB(Train),32000,1.7,102
+CH,Lucerne_City,ZRH,1,SBB(Train),32000,1.7,102
+CH,ZRH,Interlaken_City,1,SBB(Train),105000,2.9,174
+CH,Interlaken_City,ZRH,1,SBB(Train),105000,3,180
+CH,Lucerne_City,Interlaken_City,1,Luzern-Interlaken Express(Train),57000,2.8,168
+CH,Interlaken_City,Lucerne_City,1, Luzern-Interlaken Express(Train),57000,2.9,174
+GB,LHR,MAN_City,1,National Rail(Train),95000,3.5,210
+GB,LHR,MAN_City,2,FlixBus(Bus),30000,6,360
+GB,MAN_City,LHR,1,National Rail(Train),90000,3.3,198
+GB,MAN_City,LHR,2,FlixBus(Bus),28000,6.2,372
+GB,LHR,EDI_City,1,National Rail(Train),110000,5.5,330
+GB,LHR,EDI_City,2,FlixBus(Bus),32000,12,720
+GB,EDI_City,LHR,1,National Rail(Train),105000,5.2,312
+GB,EDI_City,LHR,2,FlixBus(Bus),30000,11.5,690
+GB,MAN_City,EDI_City,1,National Rail(Train),70000,3.5,210
+GB,MAN_City,EDI_City,2,FlixBus(Bus),25000,6.5,390
+GB,EDI_City,MAN_City,1,National Rail(Train),68000,3.3,198
+GB,EDI_City,MAN_City,2,FlixBus(Bus),24000,6.2,372
+AT,VIE,SZG_City,1,OBB Railjet(Train),45000,3.5,210
+AT,VIE,SZG_City,2,FlixBus(Bus),20000,5,300
+AT,SZG_City,VIE,1,OBB Railjet(Train),43000,3.3,198
+AT,SZG_City,VIE,2,FlixBus(Bus),19000,5.2,312
+AT,VIE,INN_City,1,OBB Railjet(Train),55000,5.5,330
+AT,VIE,INN_City,2,FlixBus(Bus),25000,7.5,450
+AT,INN_City,VIE,1,OBB Railjet(Train),53000,5.3,318
+AT,INN_City,VIE,2,FlixBus(Bus),24000,7.2,432
+AT,SZG_City,INN_City,1,OBB Railjet(Train),30000,2.5,150
+AT,SZG_City,INN_City,2,FlixBus(Bus),15000,3.5,210
+AT,INN_City,SZG_City,1,OBB Railjet(Train),28000,2.3,138
+AT,INN_City,SZG_City,2,FlixBus(Bus),14000,3.3,198
+DE,BER,MUC_City,1,DB ICE(Train),120000,5.5,330
+DE,BER,MUC_City,2,FlixBus(Bus),40000,9,540
+DE,MUC_City,BER,1,DB ICE(Train),115000,5.3,318
+DE,MUC_City,BER,2,FlixBus(Bus),38000,9.2,552
+DE,BER,CGN_City,1,DB ICE(Train),90000,5,300
+DE,BER,CGN_City,2,FlixBus(Bus),35000,8,480
+DE,CGN_City,BER,1,DB ICE(Train),88000,4.8,288
+DE,CGN_City,BER,2,FlixBus(Bus),33000,8.2,492
+DE,MUC_City,CGN_City,1,DB ICE(Train),95000,5,300
+DE,MUC_City,CGN_City,2,FlixBus(Bus),37000,7.5,450
+DE,CGN_City,MUC_City,1,DB ICE(Train),92000,4.8,288
+DE,CGN_City,MUC_City,2,FlixBus(Bus),36000,7.8,468
+NL,AMS,Rotterdam_City,1,NS(Train),34000,0.75,45
+NL,Rotterdam_City,AMS,1,NS(Train),34000,0.75,45
+NL,AMS,Hague_City,1,NS(Train),28000,1.2,72
+NL,Hague_City,AMS,1,NS(Train),28000,1.2,72
+NL,Rotterdam_City,Hague_City,1,NS(Train),11000,0.75,45
+NL,Hague_City,Rotterdam_City,1,NS(Train),11000,0.75,45
+BE,BRU,Bruges_City,1,SNCB(Train),30000,1.2,72
+BE,Bruges_City,BRU,1,SNCB(Train),30000,1.2,72
+BE,BRU,Gent_City,1,SNCB(Train),18000,0.7,42
+BE,Gent_City,BRU,1,SNCB(Train),18000,0.7,42
+BE,Gent_City,Bruges_City,1,SNCB(Train),14000,0.4,24
+BE,Bruges_City,Gent_City,1,SNCB(Train),14000,0.4,24
+DK,Aarhus_City,Odense_City,1,DSB(Train),75000,1.8,108
+DK,Aarhus_City,Odense_City,2,FlixBus(Bus),22000,1.7,102
+DK,Odense_City,Aarhus_City,1,DSB(Train),75000,1.7,102
+DK,Odense_City,Aarhus_City,2,FlixBus(Bus),22000,1.8,108
+DK,CPH,Odense_City,1,DSB(Train),75000,1.3,78
+DK,CPH,Odense_City,2,FlixBus(Bus),24000,2.1,126
+DK,Odense_City,CPH,1,DSB(Train),50000,1.3,78
+DK,Odense_City,CPH,2,FlixBus(Bus),24000,2.1,126
+DK,Aarhus_City,Odense_City,1,DSB(Train),70000,1.7,102
+DK,Aarhus_City,Odense_City,2,FlixBus(Bus),24000,1.7,102
+DK,Odense_City,Aarhus_City,1,DSB(Train),70000,1.7,102
+DK,Odense_City,Aarhus_City,2,FlixBus(Bus),24000,1.7,102
+DK,CPH,Aarhus_City,1,DSB(Train),190000,2.9,174
+DK,CPH,Aarhus_City,2,FlixBus(Bus),50000,3.5,210
+DK,Aarhus_City,CPH,1,DSB(Train),190000,3,180
+DK,Aarhus_City,CPH,2,FlixBus(Bus),50000,3.5,210
+HR,ZAG,Split_City,1,flixbus(bus),30000,5.5,330
+HR,ZAG,Split_City,2,Autotrans by arriva(Bus),25000,5,300
+HR,Split_City,ZAG,1,flixbus(bus),30000,6,360
+HR,Split_City,ZAG,2,Autotrans by arriva(Bus),23000,5,300
+HR,Split_City,Dubrovnik_City,1,flixbus(bus),30000,4.2,252
+HR,Dubrovnik_City,Split_City,1,flixbus(bus),26000,4.5,270
+HR,ZAG,Dubrovnik_City,1,flixbus(bus),50000,9,540
+HR,Dubrovnik_City,ZAG,1,flixbus(bus),50000,9,540
+HU,BUD,Debrecen_City,1,MÁV(Train),20000,3,180
+HU,BUD,Debrecen_City,2,Rome2Rio(Train),18000,2.5,150
+HU,Debrecen_City,BUD,1,MÁV(Train),20000,3,180
+HU,Debrecen_City,BUD,2,Rome3Rio(Train),18000,2.5,150
+HU,Debrecen_City,Szeged_City,1,MÁV(Train),25000,3.2,192
+HU,Szeged_City,Debrecen_City,1,MÁV(Train),27000,3,180
+HU,BUD,Szeged_City,1,MÁV(Train),15000,2.5,150
+HU,Szeged_City,BUD,1,MÁV(Train),15000,2.5,150
+CZ,PRG,Cesky Krumlov_City,1,Regioget(Bus),20000,3,180
+CZ,Cesky Krumlov_City,PRG,1,Regioget(Bus),30000,3,180
+CZ,Cesky Krumlov_City,Brno_City,1,Regioget(Bus),37000,7,420
+CZ,Brno_City,Cesky Krumlov_City,1,Regioget(Bus),34000,6.5,390
+CZ,PRG,Brno_City,1,Regioget(Train),15000,2.8,168
+CZ,PRG,Brno_City,2,Regioget(Bus),16000,3,180
+CZ,PRG,Brno_City,3,Slovak rail(Train),49000,2.4,144
+CZ,Brno_City,PRG,1,Regioget(Train),150000,2.8,168
+CZ,Brno_City,PRG,2,Regioget(Bus),16000,3,180
+CZ,Brno_City,PRG,3,Slovak rail(Train),49000,2.4,144
+PL,WAW,Krakow_City,1,PKP(Train),19000,2.8,168
+PL,WAW,Krakow_City,2,Flixbus(Bus),16000,3.6,216
+PL,Krakow_City,WAW,1,PKP(Train),19000,2.8,168
+PL,Krakow_City,WAW,2,Flixbus(Bus),16000,3.7,222
+PL,WAW,Gdansk_City,1,PKP(Train),45000,2.4,144
+PL,WAW,Gdansk_City,2,Flixbus(Bus),21000,4.6,276
+PL,Gdansk_City,WAW,1,PKP(Train),45000,2.5,150
+PL,Gdansk_City,WAW,2,Flixbus(Bus),21000,4.4,264
+PL,Krakow_City,Gdansk_City,1,PKP(Train),54000,5.6,336
+PL,Krakow_City,Gdansk_City,2,Flixbus(Bus),38000,8.9,534
+PL,Gdansk_City,Krakow_City,1,PKP(Train),54000,6,360
+PL,Gdansk_City,Krakow_City,2,Flixbus(Bus),38000,8.8,528
+ES,Madrid_City,BCN,1,OUIGO(Train),85000,3,180
+ES,Madrid_City,BCN,2,ALSA(Bus),43000,7.3,438
+ES,BCN,Madrid_City,1,OUIGO(Train),62000,3,180
+ES,BCN,Madrid_City,2,ALSA(Bus),48000,7.3,438
+ES,Madrid_City,Seville_City,1,OUIGO(Train),45000,2.6,156
+ES,Madrid_City,Seville_City,2,Flixbus(Bus),57000,6,360
+ES,Seville_City,Madrid_City,1,OUIGO(Train),40000,2.6,156
+ES,Seville_City,Madrid_City,2,Flixbus(Bus),57000,6.3,378
+ES,BCN,Seville_City,1,OUIGO(Train),165000,6,360
+ES,BCN,Seville_City,2,ALSA(Bus),200000,14,840
+ES,Seville_City,BCN,1,OUIGO(Train),111000,6,360
+ES,Seville_City,BCN,2,ALSA(Bus),200000,16,960
+PT,LIS,Porto_City,1,CP(Train),34000,2.7,162
+PT,LIS,Porto_City,2,Rede expressos(Bus),9000,3,180
+PT,Porto_City,LIS,1,CP(Train),34000,2.7,162
+PT,Porto_City,LIS,2,Rede expressos(Bus),9000,3,180
+PT,LIS,Faro_City,1,CP(Train),40000,2.9,174
+PT,LIS,Faro_City,2,Rede expressos(Bus),14000,3.3,198
+PT,Faro_City,LIS,1,CP(Train),49000,2.9,174
+PT,Faro_City,LIS,2,Rede expressos(Bus),12000,3,180
+PT,Porto_City,Faro_City,1,CP(Train),83000,5.7,342
+PT,Porto_City,Faro_City,2,Rede expressos(Bus),36000,7.1,426
+PT,Faro_City,Porto_City,1,CP(Train),64000,5.8,348
+PT,Faro_City,Porto_City,2,Rede expressos(Bus),36000,6.8,408

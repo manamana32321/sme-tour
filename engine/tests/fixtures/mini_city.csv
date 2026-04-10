@@ -1,0 +1,5 @@
+country,origin_node,destination_node,option_id,transport_mode,price_won,duration_hours,duration_min
+FR,CDG,NCE_City,1,Train,50000,6.7,402
+FR,NCE_City,CDG,1,Train,50000,6.7,402
+IT,FCO,MIL_City,1,Train,80000,10.0,600
+IT,MIL_City,FCO,1,Train,80000,10.0,600

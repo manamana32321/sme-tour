@@ -1,0 +1,6 @@
+# Copy to .envrc.local and fill in values, then run `direnv allow`.
+
+# Notion integration token for the SME Tour / 종설 workspace.
+# Create at: https://www.notion.so/profile/integrations
+# Required scopes: Read content, Read user information
+export NOTION_SME_TOUR_TOKEN="ntn_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
