@@ -83,25 +83,29 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
         const baseColor = line.category === "air" ? AIR_COLOR : GROUND_COLOR;
         return (
           <Polyline
-            key={`line-${line.index}`}
+            key={`line-${line.index}-${isHovered}`}
             positions={[line.from, line.to]}
-            color={isHovered ? HIGHLIGHT_COLOR : baseColor}
-            weight={isHovered ? 5 : 2}
-            opacity={isHovered ? 1 : hoveredIndex !== null ? 0.15 : 0.7}
-            dashArray={line.category === "ground" && !isHovered ? "6 4" : undefined}
+            pathOptions={{
+              color: isHovered ? HIGHLIGHT_COLOR : baseColor,
+              weight: isHovered ? 5 : 2,
+              opacity: isHovered ? 1 : hoveredIndex !== null ? 0.15 : 0.7,
+              dashArray: line.category === "ground" && !isHovered ? "6 4" : undefined,
+            }}
           />
         );
       })}
 
       {hubMarkers.map((hub) => (
         <CircleMarker
-          key={hub.iata}
+          key={`${hub.iata}-${hub.isHighlighted}`}
           center={[hub.lat, hub.lon]}
           radius={hub.isHighlighted ? 10 : hub.visited ? 7 : 4}
-          fillColor={hub.isHighlighted ? HIGHLIGHT_COLOR : hub.visited ? AIR_COLOR : "#94a3b8"}
-          fillOpacity={hub.isHighlighted ? 1 : hub.visited ? 0.9 : 0.4}
-          color={hub.isHighlighted ? HIGHLIGHT_COLOR : hub.visited ? AIR_COLOR : "#94a3b8"}
-          weight={hub.isHighlighted ? 2 : 1}
+          pathOptions={{
+            fillColor: hub.isHighlighted ? HIGHLIGHT_COLOR : hub.visited ? AIR_COLOR : "#94a3b8",
+            fillOpacity: hub.isHighlighted ? 1 : hub.visited ? 0.9 : 0.4,
+            color: hub.isHighlighted ? HIGHLIGHT_COLOR : hub.visited ? AIR_COLOR : "#94a3b8",
+            weight: hub.isHighlighted ? 2 : 1,
+          }}
         >
           <Tooltip direction="top" offset={[0, -8]}>
             {hub.flag} {hub.iata} · {hub.city_kr}
