@@ -10,6 +10,7 @@ interface RouteMapProps {
   visitedIata: string[];
   activeIndex: number | null;
   requiredCountries: string[] | null;
+  onEdgeHover: (index: number | null) => void;
   onEdgeClick: (index: number) => void;
 }
 
@@ -39,7 +40,7 @@ const AIR_COLOR = "#3b82f6";
 const GROUND_COLOR = "#f97316";
 const HIGHLIGHT_COLOR = "#a855f7";
 
-export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, onEdgeClick }: RouteMapProps) {
+export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, onEdgeClick, onEdgeHover }: RouteMapProps) {
   const cityCoords = buildCityCoordMap(edges);
   const selectedSet = requiredCountries ? new Set(requiredCountries) : null;
 
@@ -100,7 +101,11 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, o
             <Polyline
               positions={[line.from, line.to]}
               pathOptions={{ color: "transparent", weight: 20, opacity: 0 }}
-              eventHandlers={{ click: () => onEdgeClick(line.index) }}
+              eventHandlers={{
+                click: () => onEdgeClick(line.index),
+                mouseover: () => onEdgeHover(line.index),
+                mouseout: () => onEdgeHover(null),
+              }}
             />
             {/* 실제 표시 에지 */}
             <Polyline
