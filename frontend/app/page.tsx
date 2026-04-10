@@ -85,7 +85,7 @@ function PageInner() {
             <SummaryCards result={result} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
               <RouteMap edges={result.route} visitedIata={result.visited_iata} />
-              <RouteList edges={result.route} />
+              <RouteList edges={result.route} totalCost={result.total_cost_won} />
             </div>
           </div>
         )}
