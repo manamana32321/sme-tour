@@ -92,6 +92,7 @@ function PageInner() {
                 activeIndex={activeIndex}
                 requiredCountries={requiredCountries}
                 onEdgeClick={(i) => { setOpenIndex(i); setActiveIndex(i); }}
+                onEdgeHover={(i) => { if (openIndex === null) setActiveIndex(i); }}
               />
               <RouteList
                 edges={result.route}
