@@ -48,7 +48,7 @@ export function useOptimize(params: OptimizeRequest): UseOptimizeReturn {
     }, DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [params.budget_won, params.deadline_days, params.start_hub, params.w_cost]);
+  }, [params.budget_won, params.deadline_days, params.start_hub, params.w_cost, JSON.stringify(params.required_countries)]);
 
   return { result, loading, error };
 }

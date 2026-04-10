@@ -121,6 +121,8 @@ class GurobiSolver(BaseSolver):
         )
 
         # ── 흐름 보존 제약 ──────────────────────────────────
+        required = set(req.required_countries) if req.required_countries else graph.hubs
+
         for n in graph.virtual_nodes:
             if "_Entry" in n or "_Exit" in n:
                 # 허브 노드: in-flow = out-flow
@@ -129,9 +131,16 @@ class GurobiSolver(BaseSolver):
                     == gp.quicksum(x[e] for e in edge_dict if e[1] == n)
                 )
             else:
-                # 내륙 도시: 정확히 1회 방문
-                m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[0] == n) == 1)
-                m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[1] == n) == 1)
+                # 내륙 도시: 소속 국가가 required면 강제, 아니면 선택적
+                hub = graph.city_to_hub.get(n)
+                if hub and hub in required:
+                    m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[0] == n) == 1)
+                    m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[1] == n) == 1)
+                else:
+                    m.addConstr(
+                        gp.quicksum(x[e] for e in edge_dict if e[0] == n)
+                        == gp.quicksum(x[e] for e in edge_dict if e[1] == n)
+                    )
 
         # ── 출발지 제약 ─────────────────────────────────────
         start_node = f"{req.start_hub}_Entry"

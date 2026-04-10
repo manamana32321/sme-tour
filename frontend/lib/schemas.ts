@@ -13,6 +13,7 @@ export const OptimizeRequestSchema = z.object({
     message: "유효한 공항 코드가 아닙니다",
   }),
   w_cost: z.number().min(0).max(1).default(0.5),
+  required_countries: z.array(z.string()).nullable().default(null),
 });
 export type OptimizeRequest = z.infer<typeof OptimizeRequestSchema>;
 

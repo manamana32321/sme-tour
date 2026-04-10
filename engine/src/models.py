@@ -58,6 +58,10 @@ class OptimizeRequest(BaseModel):
         le=1.0,
         description="비용 가중치. 0.0 = 시간 최우선, 1.0 = 비용 최우선",
     )
+    required_countries: list[str] | None = Field(
+        None,
+        description="방문 필수 국가 IATA 코드 리스트. None이면 전체 15개국 필수 방문.",
+    )
 
     @computed_field  # type: ignore[prop-decorator]
     @property

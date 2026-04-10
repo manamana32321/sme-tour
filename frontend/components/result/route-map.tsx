@@ -24,14 +24,10 @@ function buildCityCoordMap(edges: RouteEdge[]): Map<string, [number, number]> {
   const cityCoords = new Map<string, [number, number]>();
   for (const edge of edges) {
     const fromHub = hubCoord(edge.from_node);
-    if (fromHub && !hubCoord(edge.to_node)) {
-      cityCoords.set(edge.to_node, fromHub);
-    }
+    if (fromHub && !hubCoord(edge.to_node)) cityCoords.set(edge.to_node, fromHub);
     const toHub = hubCoord(edge.to_node);
-    if (toHub && !hubCoord(edge.from_node)) {
-      if (!cityCoords.has(edge.from_node)) {
-        cityCoords.set(edge.from_node, toHub);
-      }
+    if (toHub && !hubCoord(edge.from_node) && !cityCoords.has(edge.from_node)) {
+      cityCoords.set(edge.from_node, toHub);
     }
   }
   return cityCoords;
@@ -39,7 +35,7 @@ function buildCityCoordMap(edges: RouteEdge[]): Map<string, [number, number]> {
 
 const AIR_COLOR = "#3b82f6";
 const GROUND_COLOR = "#f97316";
-const HIGHLIGHT_COLOR = "#ef4444"; // red-500
+const HIGHLIGHT_COLOR = "#a855f7"; // purple-500
 
 export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
   const cityCoords = buildCityCoordMap(edges);
@@ -48,7 +44,6 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
     return hubCoord(node) ?? cityCoords.get(node) ?? null;
   }
 
-  // 에지별 polyline 데이터 (index 보존)
   const lines: { from: [number, number]; to: [number, number]; category: string; index: number }[] = [];
   for (let i = 0; i < edges.length; i++) {
     const edge = edges[i];
@@ -60,11 +55,14 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
     lines.push({ from, to, category: edge.category, index: i });
   }
 
-  // 호버된 에지의 from/to 노드 좌표 (마커 하이라이트용)
+  // 호버 시 노드 하이라이트: 국가 내 이동(ground)만 from/to 노드 강조
   const highlightedNodes = new Set<string>();
   if (hoveredIndex !== null && edges[hoveredIndex]) {
-    highlightedNodes.add(edges[hoveredIndex].from_node);
-    highlightedNodes.add(edges[hoveredIndex].to_node);
+    const hovered = edges[hoveredIndex];
+    if (hovered.category === "ground") {
+      highlightedNodes.add(hovered.from_node);
+      highlightedNodes.add(hovered.to_node);
+    }
   }
 
   const hubMarkers = Object.values(HUBS).map((hub) => {
@@ -80,7 +78,6 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
         url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
 
-      {/* 경로 선 (호버 시 강조) */}
       {lines.map((line) => {
         const isHovered = hoveredIndex === line.index;
         const baseColor = line.category === "air" ? AIR_COLOR : GROUND_COLOR;
@@ -90,13 +87,12 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
             positions={[line.from, line.to]}
             color={isHovered ? HIGHLIGHT_COLOR : baseColor}
             weight={isHovered ? 5 : 2}
-            opacity={isHovered ? 1 : hoveredIndex !== null ? 0.2 : 0.7}
+            opacity={isHovered ? 1 : hoveredIndex !== null ? 0.15 : 0.7}
             dashArray={line.category === "ground" && !isHovered ? "6 4" : undefined}
           />
         );
       })}
 
-      {/* 허브 마커 (호버 시 강조) */}
       {hubMarkers.map((hub) => (
         <CircleMarker
           key={hub.iata}

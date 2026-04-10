@@ -67,6 +67,9 @@ class OrToolsSolver(BaseSolver):
         # 시간 제약
         model.add(sum(edge_time[i] * x[i] for i in range(n_edges)) <= deadline)
 
+        # 필수 방문 국가 결정
+        required = set(req.required_countries) if req.required_countries else graph.hubs
+
         # 흐름 보존
         for n in nodes:
             out_idx = [i for i, ek in enumerate(edge_keys) if ek[0] == n]
@@ -74,8 +77,14 @@ class OrToolsSolver(BaseSolver):
             if "_Entry" in n or "_Exit" in n:
                 model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
             else:
-                model.add(sum(x[i] for i in out_idx) == 1)
-                model.add(sum(x[i] for i in in_idx) == 1)
+                # 내륙 도시: 소속 국가가 required면 강제 방문, 아니면 선택적
+                hub = graph.city_to_hub.get(n)
+                if hub and hub in required:
+                    model.add(sum(x[i] for i in out_idx) == 1)
+                    model.add(sum(x[i] for i in in_idx) == 1)
+                else:
+                    # 선택적: in=out (0=0 허용)
+                    model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
 
         # 출발지
         start_node = f"{req.start_hub}_Entry"
