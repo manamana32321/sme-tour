@@ -1,4 +1,6 @@
+import { Suspense } from "react";
 import { OptimizeForm } from "@/components/form/optimize-form";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function HomePage() {
   return (
@@ -12,7 +14,9 @@ export default function HomePage() {
         </p>
       </div>
 
-      <OptimizeForm />
+      <Suspense fallback={<Skeleton className="w-full max-w-lg h-80" />}>
+        <OptimizeForm />
+      </Suspense>
 
       <p className="mt-6 text-xs text-muted-foreground max-w-md text-center">
         Clustered TSP 기반 다목적 최적화 엔진이 15개 허브 공항과 내륙 도시를 탐색합니다.
