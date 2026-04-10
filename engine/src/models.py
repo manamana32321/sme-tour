@@ -105,7 +105,7 @@ class OptimizeResult(BaseModel):
     total_time_minutes: int
     objective_value: float
     solve_time_ms: int
-    solver: Literal["gurobi"]
+    solver: Literal["gurobi", "ortools"]
     visited_iata: list[str]
     visited_cities: list[str]
     engine_version: str

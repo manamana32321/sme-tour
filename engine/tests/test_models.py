@@ -145,8 +145,25 @@ class TestOptimizeResult:
         assert result.status == Status.INFEASIBLE
         assert result.route == []
 
-    def test_rejects_non_gurobi_solver(self) -> None:
-        """MVP A는 Gurobi only. Literal constraint가 다른 값을 차단."""
+    def test_accepts_both_solver_literals(self) -> None:
+        """gurobi와 ortools 모두 허용 (OR-Tools fallback 지원)."""
+        for solver_name in ("gurobi", "ortools"):
+            result = OptimizeResult(
+                status=Status.OPTIMAL,
+                route=[],
+                total_cost_won=0,
+                total_time_minutes=0,
+                objective_value=0.0,
+                solve_time_ms=0,
+                solver=solver_name,  # type: ignore[arg-type]
+                visited_iata=[],
+                visited_cities=[],
+                engine_version="x",
+            )
+            assert result.solver == solver_name
+
+    def test_rejects_unknown_solver(self) -> None:
+        """Literal constraint가 gurobi/ortools 외 다른 값을 차단."""
         with pytest.raises(ValidationError):
             OptimizeResult(
                 status=Status.OPTIMAL,
@@ -155,7 +172,7 @@ class TestOptimizeResult:
                 total_time_minutes=0,
                 objective_value=0.0,
                 solve_time_ms=0,
-                solver="ortools",  # type: ignore[arg-type]
+                solver="cplex",  # type: ignore[arg-type]
                 visited_iata=[],
                 visited_cities=[],
                 engine_version="x",

@@ -55,20 +55,13 @@ class TestBaseSolverContract:
 
 
 class TestFactory:
-    def test_get_solver_triggers_gurobi_import(self) -> None:
-        """gurobipy가 설치되지 않은 환경에서는 ImportError, 설치된 환경에서는 정상.
+    def test_get_solver_returns_valid_solver(self) -> None:
+        """factory가 유효한 솔버를 반환한다.
 
-        이 테스트는 gurobipy 설치 여부에 관계없이 factory가 lazy import를
-        실제로 수행하는지만 검증한다.
+        Gurobi 설치 + WLS 인증 성공 → GurobiSolver,
+        미설치 or WLS 실패 → OrToolsSolver fallback.
+        어느 쪽이든 BaseSolver 인스턴스여야 한다.
         """
-        try:
-            solver = get_solver()
-            # 설치되어 있고 WLS env가 있으면 정상 생성
-            assert isinstance(solver, BaseSolver)
-            assert solver.name == "gurobi"
-        except ImportError:
-            # gurobipy 미설치 — 정상 동작
-            pytest.skip("gurobipy not installed in this environment")
-        except (KeyError, SolverInitializationError):
-            # WLS env vars 누락 — factory 자체는 정상, 초기화 단계에서 실패
-            pytest.skip("WLS credentials not set")
+        solver = get_solver()
+        assert isinstance(solver, BaseSolver)
+        assert solver.name in ("gurobi", "ortools")
