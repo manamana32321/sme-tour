@@ -90,6 +90,7 @@ function PageInner() {
                 edges={result.route}
                 visitedIata={result.visited_iata}
                 activeIndex={activeIndex}
+                requiredCountries={requiredCountries}
                 onEdgeClick={(i) => { setOpenIndex(i); setActiveIndex(i); }}
               />
               <RouteList
