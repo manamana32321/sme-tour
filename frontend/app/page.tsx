@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import dynamic from "next/dynamic";
 import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString } from "nuqs";
 import { OptimizeForm } from "@/components/form/optimize-form";
@@ -24,6 +24,8 @@ function PageInner() {
     start_hub: parseAsString.withDefault("CDG"),
     w_cost: parseAsFloat.withDefault(0.5),
   });
+
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
   const { result, loading, error } = useOptimize({
     budget_won: params.budget_won,
@@ -84,8 +86,8 @@ function PageInner() {
           <div className={loading ? "opacity-40 pointer-events-none transition-opacity" : "transition-opacity"}>
             <SummaryCards result={result} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
-              <RouteMap edges={result.route} visitedIata={result.visited_iata} />
-              <RouteList edges={result.route} totalCost={result.total_cost_won} />
+              <RouteMap edges={result.route} visitedIata={result.visited_iata} hoveredIndex={hoveredIndex} />
+              <RouteList edges={result.route} totalCost={result.total_cost_won} onHover={setHoveredIndex} />
             </div>
           </div>
         )}

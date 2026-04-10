@@ -12,6 +12,7 @@ interface RouteEdgeCardProps {
   cumulativeTime: number;
   totalCost: number;
   totalEdges: number;
+  onHover: (index: number | null) => void;
 }
 
 export function RouteEdgeCard({
@@ -21,18 +22,21 @@ export function RouteEdgeCard({
   cumulativeTime,
   totalCost,
   totalEdges,
+  onHover,
 }: RouteEdgeCardProps) {
   const [open, setOpen] = useState(false);
   const mode = formatMode(edge.mode);
   const costRatio = totalCost > 0 ? ((edge.cost_won / totalCost) * 100).toFixed(1) : "0";
 
   return (
-    <div
-      className="border-b last:border-b-0 cursor-pointer hover:bg-muted/50 transition-colors"
-      onClick={() => setOpen(!open)}
-    >
-      {/* 접힌 상태 */}
-      <div className="flex items-center gap-3 py-2.5 px-3">
+    <div className="border-b last:border-b-0">
+      {/* 트리거 (호버 + 클릭) — 이벤트는 여기에만 */}
+      <div
+        className="flex items-center gap-3 py-2.5 px-3 cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={() => setOpen(!open)}
+        onMouseEnter={() => onHover(index)}
+        onMouseLeave={() => onHover(null)}
+      >
         <span className="text-xs text-muted-foreground w-6 text-right tabular-nums shrink-0">
           {String(index + 1).padStart(2, "0")}
         </span>
@@ -52,7 +56,7 @@ export function RouteEdgeCard({
         <span className="text-xs text-muted-foreground shrink-0">{open ? "▲" : "▼"}</span>
       </div>
 
-      {/* 펼친 상태 */}
+      {/* 바디 (이벤트 없음) */}
       {open && (
         <div className="px-3 pb-3 pt-1 ml-9 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs border-t border-dashed">
           <Detail label="교통수단" value={`${mode.icon} ${mode.label}`} />
