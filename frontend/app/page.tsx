@@ -26,7 +26,8 @@ function PageInner() {
   });
 
   const [requiredCountries, setRequiredCountries] = useState<string[] | null>(null);
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const { result, loading, error } = useOptimize({
     budget_won: params.budget_won,
@@ -85,8 +86,20 @@ function PageInner() {
           <div className={loading ? "opacity-40 pointer-events-none transition-opacity" : "transition-opacity"}>
             <SummaryCards result={result} />
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
-              <RouteMap edges={result.route} visitedIata={result.visited_iata} hoveredIndex={hoveredIndex} />
-              <RouteList edges={result.route} totalCost={result.total_cost_won} onHover={setHoveredIndex} />
+              <RouteMap
+                edges={result.route}
+                visitedIata={result.visited_iata}
+                activeIndex={activeIndex}
+                onEdgeClick={(i) => { setOpenIndex(i); setActiveIndex(i); }}
+              />
+              <RouteList
+                edges={result.route}
+                totalCost={result.total_cost_won}
+                activeIndex={activeIndex}
+                openIndex={openIndex}
+                onActiveChange={setActiveIndex}
+                onOpenChange={setOpenIndex}
+              />
             </div>
           </div>
         )}

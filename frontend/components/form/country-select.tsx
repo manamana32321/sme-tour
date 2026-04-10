@@ -1,5 +1,7 @@
 "use client";
 
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Button } from "@/components/ui/button";
 import { HUB_LIST } from "@/lib/hubs";
 
 interface CountrySelectProps {
@@ -8,57 +10,45 @@ interface CountrySelectProps {
 }
 
 export function CountrySelect({ value, onChange }: CountrySelectProps) {
-  const selected = value ? new Set(value) : new Set(HUB_LIST.map((h) => h.iata));
-  const allSelected = selected.size === HUB_LIST.length;
+  const allIatas = HUB_LIST.map((h) => h.iata);
+  const selected = value ?? allIatas;
+  const allSelected = selected.length === allIatas.length;
 
-  function toggle(iata: string) {
-    const next = new Set(selected);
-    if (next.has(iata)) {
-      next.delete(iata);
-    } else {
-      next.add(iata);
-    }
-    // 전부 선택이면 null (기본값 = 전체)
-    onChange(next.size === HUB_LIST.length ? null : Array.from(next));
-  }
-
-  function toggleAll() {
-    onChange(allSelected ? [] : null);
+  function handleChange(next: string[]) {
+    onChange(next.length === allIatas.length ? null : next);
   }
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium">방문 국가</label>
-        <button
-          type="button"
-          onClick={toggleAll}
-          className="text-xs text-muted-foreground hover:text-foreground"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-auto py-0.5 px-1.5 text-xs"
+          onClick={() => onChange(allSelected ? [] : null)}
         >
           {allSelected ? "전체 해제" : "전체 선택"}
-        </button>
+        </Button>
       </div>
-      <div className="grid grid-cols-3 gap-1">
-        {HUB_LIST.map((hub) => {
-          const checked = selected.has(hub.iata);
-          return (
-            <button
-              key={hub.iata}
-              type="button"
-              onClick={() => toggle(hub.iata)}
-              className={`text-xs px-2 py-1.5 rounded border transition-colors text-left truncate ${
-                checked
-                  ? "bg-primary/10 border-primary/30 text-foreground"
-                  : "bg-muted/30 border-transparent text-muted-foreground"
-              }`}
-            >
-              {hub.flag} {hub.city_kr}
-            </button>
-          );
-        })}
-      </div>
+      <ToggleGroup
+        value={selected}
+        onValueChange={handleChange}
+        className="flex flex-wrap gap-1 justify-start"
+      >
+        {HUB_LIST.map((hub) => (
+          <ToggleGroupItem
+            key={hub.iata}
+            value={hub.iata}
+            size="sm"
+            className="text-xs px-2 py-1 h-auto data-[state=on]:bg-primary/10 data-[state=on]:border-primary/30"
+          >
+            {hub.flag} {hub.city_kr}
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
       <p className="text-xs text-muted-foreground text-center">
-        {selected.size}/{HUB_LIST.length}개국 선택
+        {selected.length}/{allIatas.length}개국
       </p>
     </div>
   );
