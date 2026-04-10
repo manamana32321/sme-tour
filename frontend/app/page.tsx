@@ -91,6 +91,7 @@ function PageInner() {
                 visitedIata={result.visited_iata}
                 activeIndex={activeIndex}
                 requiredCountries={requiredCountries}
+                startHub={params.start_hub}
                 onEdgeClick={(i) => { setOpenIndex(i); setActiveIndex(i); }}
                 onEdgeHover={(i) => { if (openIndex === null) setActiveIndex(i); }}
               />
