@@ -4,7 +4,7 @@ metadata:
   name: sme-tour-engine
   namespace: sme-tour
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-dns
+    cert-manager.io/cluster-issuer: letsencrypt-dns01
 spec:
   ingressClassName: nginx
   tls:
