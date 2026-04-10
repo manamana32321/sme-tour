@@ -8,7 +8,8 @@ import type { RouteEdge } from "@/lib/schemas";
 interface RouteMapProps {
   edges: RouteEdge[];
   visitedIata: string[];
-  hoveredIndex: number | null;
+  activeIndex: number | null;
+  onEdgeClick: (index: number) => void;
 }
 
 function hubCoord(node: string): [number, number] | null {
@@ -35,9 +36,9 @@ function buildCityCoordMap(edges: RouteEdge[]): Map<string, [number, number]> {
 
 const AIR_COLOR = "#3b82f6";
 const GROUND_COLOR = "#f97316";
-const HIGHLIGHT_COLOR = "#a855f7"; // purple-500
+const HIGHLIGHT_COLOR = "#a855f7";
 
-export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
+export function RouteMap({ edges, visitedIata, activeIndex, onEdgeClick }: RouteMapProps) {
   const cityCoords = buildCityCoordMap(edges);
 
   function nodeCoord(node: string): [number, number] | null {
@@ -55,13 +56,12 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
     lines.push({ from, to, category: edge.category, index: i });
   }
 
-  // 호버 시 노드 하이라이트: 국가 내 이동(ground)만 from/to 노드 강조
   const highlightedNodes = new Set<string>();
-  if (hoveredIndex !== null && edges[hoveredIndex]) {
-    const hovered = edges[hoveredIndex];
-    if (hovered.category === "ground") {
-      highlightedNodes.add(hovered.from_node);
-      highlightedNodes.add(hovered.to_node);
+  if (activeIndex !== null && edges[activeIndex]) {
+    const active = edges[activeIndex];
+    if (active.category === "ground") {
+      highlightedNodes.add(active.from_node);
+      highlightedNodes.add(active.to_node);
     }
   }
 
@@ -79,18 +79,19 @@ export function RouteMap({ edges, visitedIata, hoveredIndex }: RouteMapProps) {
       />
 
       {lines.map((line) => {
-        const isHovered = hoveredIndex === line.index;
+        const isActive = activeIndex === line.index;
         const baseColor = line.category === "air" ? AIR_COLOR : GROUND_COLOR;
         return (
           <Polyline
-            key={`line-${line.index}-${isHovered}`}
+            key={`line-${line.index}-${isActive}`}
             positions={[line.from, line.to]}
             pathOptions={{
-              color: isHovered ? HIGHLIGHT_COLOR : baseColor,
-              weight: isHovered ? 5 : 2,
-              opacity: isHovered ? 1 : hoveredIndex !== null ? 0.15 : 0.7,
-              dashArray: line.category === "ground" && !isHovered ? "6 4" : undefined,
+              color: isActive ? HIGHLIGHT_COLOR : baseColor,
+              weight: isActive ? 5 : 2,
+              opacity: 0.7,
+              dashArray: line.category === "ground" && !isActive ? "6 4" : undefined,
             }}
+            eventHandlers={{ click: () => onEdgeClick(line.index) }}
           />
         );
       })}

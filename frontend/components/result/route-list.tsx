@@ -8,10 +8,13 @@ import type { RouteEdge } from "@/lib/schemas";
 interface RouteListProps {
   edges: RouteEdge[];
   totalCost: number;
-  onHover: (index: number | null) => void;
+  activeIndex: number | null;
+  openIndex: number | null;
+  onActiveChange: (index: number | null) => void;
+  onOpenChange: (index: number | null) => void;
 }
 
-export function RouteList({ edges, totalCost, onHover }: RouteListProps) {
+export function RouteList({ edges, totalCost, activeIndex, openIndex, onActiveChange, onOpenChange }: RouteListProps) {
   const cumulative = useMemo(() => {
     let cost = 0;
     let time = 0;
@@ -21,6 +24,17 @@ export function RouteList({ edges, totalCost, onHover }: RouteListProps) {
       return { cost, time };
     });
   }, [edges]);
+
+  function handleToggle(index: number) {
+    const nextOpen = openIndex === index ? null : index;
+    onOpenChange(nextOpen);
+    onActiveChange(nextOpen);
+  }
+
+  function handleHover(index: number | null) {
+    if (openIndex !== null) return;
+    onActiveChange(index);
+  }
 
   return (
     <Card className="flex flex-col">
@@ -37,7 +51,10 @@ export function RouteList({ edges, totalCost, onHover }: RouteListProps) {
             cumulativeTime={cumulative[i].time}
             totalCost={totalCost}
             totalEdges={edges.length}
-            onHover={onHover}
+            isActive={activeIndex === i}
+            isOpen={openIndex === i}
+            onToggle={handleToggle}
+            onHover={handleHover}
           />
         ))}
       </CardContent>

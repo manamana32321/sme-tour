@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 import { formatKRW, formatEdgeDuration } from "@/lib/format";
 import { formatNode, formatMode, nodeCountry } from "@/lib/node-label";
 import type { RouteEdge } from "@/lib/schemas";
@@ -12,6 +12,9 @@ interface RouteEdgeCardProps {
   cumulativeTime: number;
   totalCost: number;
   totalEdges: number;
+  isActive: boolean;
+  isOpen: boolean;
+  onToggle: (index: number) => void;
   onHover: (index: number | null) => void;
 }
 
@@ -22,20 +25,35 @@ export function RouteEdgeCard({
   cumulativeTime,
   totalCost,
   totalEdges,
+  isActive,
+  isOpen,
+  onToggle,
   onHover,
 }: RouteEdgeCardProps) {
-  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const mode = formatMode(edge.mode);
   const costRatio = totalCost > 0 ? ((edge.cost_won / totalCost) * 100).toFixed(1) : "0";
 
+  // 지도에서 클릭 → 리스트 자동 스크롤
+  useEffect(() => {
+    if (isActive && ref.current) {
+      ref.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [isActive]);
+
   return (
-    <div className="border-b last:border-b-0">
-      {/* 트리거 (호버 + 클릭) — 이벤트는 여기에만 */}
+    <div
+      ref={ref}
+      className={`border-b last:border-b-0 transition-colors ${
+        isActive ? "bg-purple-50 dark:bg-purple-950/30" : ""
+      }`}
+    >
+      {/* 트리거 */}
       <div
         className="flex items-center gap-3 py-2.5 px-3 cursor-pointer hover:bg-muted/50 transition-colors"
-        onClick={() => setOpen(!open)}
+        onClick={() => onToggle(index)}
         onMouseEnter={() => onHover(index)}
-        onMouseLeave={() => onHover(null)}
+        onMouseLeave={() => { if (!isOpen) onHover(null); }}
       >
         <span className="text-xs text-muted-foreground w-6 text-right tabular-nums shrink-0">
           {String(index + 1).padStart(2, "0")}
@@ -53,11 +71,11 @@ export function RouteEdgeCard({
             {formatEdgeDuration(edge.time_minutes)}
           </div>
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">{open ? "▲" : "▼"}</span>
+        <span className="text-xs text-muted-foreground shrink-0">{isOpen ? "▲" : "▼"}</span>
       </div>
 
-      {/* 바디 (이벤트 없음) */}
-      {open && (
+      {/* 바디 */}
+      {isOpen && (
         <div className="px-3 pb-3 pt-1 ml-9 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs border-t border-dashed">
           <Detail label="교통수단" value={`${mode.icon} ${mode.label}`} />
           <Detail label="비용 비율" value={`전체의 ${costRatio}%`} />
@@ -89,8 +107,6 @@ function CountryDetail({ from, to }: { from: string; to: string }) {
   if (fc && tc && fc.country_kr !== tc.country_kr) {
     return <Detail label="국가 이동" value={`${fc.flag} ${fc.country_kr} → ${tc.flag} ${tc.country_kr}`} />;
   }
-  if (fc) {
-    return <Detail label="국가" value={`${fc.flag} ${fc.country_kr}`} />;
-  }
+  if (fc) return <Detail label="국가" value={`${fc.flag} ${fc.country_kr}`} />;
   return null;
 }
