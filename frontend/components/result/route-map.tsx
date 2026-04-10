@@ -88,7 +88,7 @@ export function RouteMap({ edges, visitedIata }: RouteMapProps) {
     >
       <TileLayer
         attribution='&copy; <a href="https://carto.com">CARTO</a>'
-        url="https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png"
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
       />
 
       {/* 항공 경로 (파란색 실선) */}

@@ -12,14 +12,14 @@ export function InfeasibleBanner() {
     const params = new URLSearchParams(sp.toString());
     const budget = Number(params.get("budget_won") ?? 10_000_000);
     params.set("budget_won", String(Math.min(Math.round(budget * 1.2), 30_000_000)));
-    router.replace(`/result?${params.toString()}`);
+    router.replace(`/?${params.toString()}`);
   }
 
   function retryWithMoreDays() {
     const params = new URLSearchParams(sp.toString());
     const days = Number(params.get("deadline_days") ?? 14);
     params.set("deadline_days", String(Math.min(days + 3, 30)));
-    router.replace(`/result?${params.toString()}`);
+    router.replace(`/?${params.toString()}`);
   }
 
   return (
