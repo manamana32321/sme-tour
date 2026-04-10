@@ -10,31 +10,61 @@ interface RouteMapProps {
   visitedIata: string[];
 }
 
-/** 노드 이름에서 좌표 추출. 허브는 HUBS에서, 내륙 도시는 가장 가까운 허브 좌표 사용 (근사). */
-function nodeCoord(node: string): [number, number] | null {
-  // {IATA}_Entry / {IATA}_Exit
-  const hubMatch = node.match(/^([A-Z]{3})_(Entry|Exit)$/);
-  if (hubMatch) {
-    const hub = HUBS[hubMatch[1]];
+/** 허브 노드에서 좌표 추출. `{IATA}_Entry` / `{IATA}_Exit` → HUBS 좌표. */
+function hubCoord(node: string): [number, number] | null {
+  const m = node.match(/^([A-Z]{3})_(Entry|Exit)$/);
+  if (m) {
+    const hub = HUBS[m[1]];
     return hub ? [hub.lat, hub.lon] : null;
   }
-  // 내륙 도시 — HUBS에서 좌표를 못 찾음. null 반환.
   return null;
+}
+
+/**
+ * 경로 에지에서 내륙 도시 → 소속 허브 좌표 매핑을 구축한다.
+ * 엔진의 Chisman 군집 연속성에 의해 내륙 도시는 항상 같은 허브의
+ * Entry/Exit 사이에 위치하므로, 인접 에지에서 허브를 추론할 수 있다.
+ */
+function buildCityCoordMap(edges: RouteEdge[]): Map<string, [number, number]> {
+  const cityCoords = new Map<string, [number, number]>();
+
+  for (const edge of edges) {
+    // hub → city: from이 허브면 to(도시)에 허브 좌표 부여
+    const fromHub = hubCoord(edge.from_node);
+    if (fromHub && !hubCoord(edge.to_node)) {
+      cityCoords.set(edge.to_node, fromHub);
+    }
+    // city → hub: to가 허브면 from(도시)에 허브 좌표 부여
+    const toHub = hubCoord(edge.to_node);
+    if (toHub && !hubCoord(edge.from_node)) {
+      if (!cityCoords.has(edge.from_node)) {
+        cityCoords.set(edge.from_node, toHub);
+      }
+    }
+  }
+  return cityCoords;
 }
 
 const AIR_COLOR = "#3b82f6"; // blue-500
 const GROUND_COLOR = "#f97316"; // orange-500
 
 export function RouteMap({ edges, visitedIata }: RouteMapProps) {
-  // 경로 선 좌표 추출 (좌표 없는 노드는 건너뜀)
+  const cityCoords = buildCityCoordMap(edges);
+
+  /** 노드 좌표: 허브 → HUBS에서 직접, 내륙 도시 → 소속 허브 좌표(근사). */
+  function nodeCoord(node: string): [number, number] | null {
+    return hubCoord(node) ?? cityCoords.get(node) ?? null;
+  }
+
   const airLines: [number, number][][] = [];
   const groundLines: [number, number][][] = [];
 
   for (const edge of edges) {
+    if (edge.category === "hub_stay") continue;
     const from = nodeCoord(edge.from_node);
     const to = nodeCoord(edge.to_node);
     if (!from || !to) continue;
-    if (from[0] === to[0] && from[1] === to[1]) continue; // hub_stay skip
+    if (from[0] === to[0] && from[1] === to[1]) continue; // 같은 좌표면 skip
 
     if (edge.category === "air") {
       airLines.push([from, to]);

@@ -11,7 +11,7 @@ export function InfeasibleBanner() {
   function retryWithMoreBudget() {
     const params = new URLSearchParams(sp.toString());
     const budget = Number(params.get("budget_won") ?? 10_000_000);
-    params.set("budget_won", String(Math.round(budget * 1.2)));
+    params.set("budget_won", String(Math.min(Math.round(budget * 1.2), 30_000_000)));
     router.replace(`/result?${params.toString()}`);
   }
 
