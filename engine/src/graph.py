@@ -72,6 +72,9 @@ class Graph:
     edges: list[Edge] = field(default_factory=list)
     """전체 에지 리스트."""
 
+    city_to_hub: dict[str, str] = field(default_factory=dict)
+    """내륙 도시 → 소속 허브 IATA 매핑 (예: {'NCE_City': 'CDG'})."""
+
     scale_factor: int = 10_000
     """비용 정규화 인자. 솔버 결과 해석 시 되돌려 곱해야 함."""
 
@@ -173,10 +176,20 @@ def build_graph(
     for h in sorted(hubs):
         _add(f"{h}_Entry", f"{h}_Exit", "Hub_Stay", 0.0, 0)
 
+    # 4) 내륙 도시 → 소속 허브 매핑 (city_csv에서 hub→city 관계 추출)
+    city_to_hub: dict[str, str] = {}
+    for _, row in city_df.iterrows():
+        u_raw, v_raw = row["origin_node"], row["destination_node"]
+        if u_raw in hubs and v_raw in internal_cities:
+            city_to_hub.setdefault(v_raw, u_raw)
+        elif u_raw in internal_cities and v_raw in hubs:
+            city_to_hub.setdefault(u_raw, v_raw)
+
     return Graph(
         hubs=hubs,
         internal_cities=internal_cities,
         virtual_nodes=virtual_nodes,
         edges=edges,
+        city_to_hub=city_to_hub,
         scale_factor=scale_factor,
     )
