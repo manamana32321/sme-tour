@@ -9,6 +9,7 @@ interface RouteMapProps {
   edges: RouteEdge[];
   visitedIata: string[];
   activeIndex: number | null;
+  requiredCountries: string[] | null;
   onEdgeClick: (index: number) => void;
 }
 
@@ -38,11 +39,21 @@ const AIR_COLOR = "#3b82f6";
 const GROUND_COLOR = "#f97316";
 const HIGHLIGHT_COLOR = "#a855f7";
 
-export function RouteMap({ edges, visitedIata, activeIndex, onEdgeClick }: RouteMapProps) {
+export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, onEdgeClick }: RouteMapProps) {
   const cityCoords = buildCityCoordMap(edges);
+  const selectedSet = requiredCountries ? new Set(requiredCountries) : null;
 
   function nodeCoord(node: string): [number, number] | null {
     return hubCoord(node) ?? cityCoords.get(node) ?? null;
+  }
+
+  /** 노드가 선택된 국가에 속하는지 */
+  function isNodeSelected(node: string): boolean {
+    if (!selectedSet) return true; // null = 전체 선택
+    const m = node.match(/^([A-Z]{3})_(Entry|Exit)$/);
+    if (m) return selectedSet.has(m[1]);
+    // 내륙 도시는 visitedIata에 소속 허브가 있으면 표시
+    return true; // 엔진 결과에 포함된 도시는 표시
   }
 
   const lines: { from: [number, number]; to: [number, number]; category: string; index: number }[] = [];
@@ -65,11 +76,13 @@ export function RouteMap({ edges, visitedIata, activeIndex, onEdgeClick }: Route
     }
   }
 
-  const hubMarkers = Object.values(HUBS).map((hub) => {
-    const isHighlighted =
-      highlightedNodes.has(`${hub.iata}_Entry`) || highlightedNodes.has(`${hub.iata}_Exit`);
-    return { ...hub, visited: visitedIata.includes(hub.iata), isHighlighted };
-  });
+  const hubMarkers = Object.values(HUBS)
+    .filter((hub) => !selectedSet || selectedSet.has(hub.iata))
+    .map((hub) => {
+      const isHighlighted =
+        highlightedNodes.has(`${hub.iata}_Entry`) || highlightedNodes.has(`${hub.iata}_Exit`);
+      return { ...hub, visited: visitedIata.includes(hub.iata), isHighlighted };
+    });
 
   return (
     <MapContainer center={[48.5, 10]} zoom={4} className="h-[500px] w-full rounded-lg" scrollWheelZoom>
