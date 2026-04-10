@@ -8,10 +8,10 @@ import type { RouteEdge } from "@/lib/schemas";
 interface RouteListProps {
   edges: RouteEdge[];
   totalCost: number;
+  onHover: (index: number | null) => void;
 }
 
-export function RouteList({ edges, totalCost }: RouteListProps) {
-  // 누적 비용/시간 사전 계산
+export function RouteList({ edges, totalCost, onHover }: RouteListProps) {
   const cumulative = useMemo(() => {
     let cost = 0;
     let time = 0;
@@ -37,6 +37,7 @@ export function RouteList({ edges, totalCost }: RouteListProps) {
             cumulativeTime={cumulative[i].time}
             totalCost={totalCost}
             totalEdges={edges.length}
+            onHover={onHover}
           />
         ))}
       </CardContent>
