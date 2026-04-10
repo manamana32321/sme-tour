@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import { HUB_LIST } from "@/lib/hubs";
 
@@ -12,13 +11,22 @@ interface CountrySelectProps {
 
 export function CountrySelect({ value, onApply }: CountrySelectProps) {
   const allIatas = HUB_LIST.map((h) => h.iata);
-  const [draft, setDraft] = useState<string[]>(value ?? allIatas);
+  const [draft, setDraft] = useState<Set<string>>(new Set(value ?? allIatas));
   const committed = value ?? allIatas;
-  const allSelected = draft.length === allIatas.length;
+  const allSelected = draft.size === allIatas.length;
   const isDirty = JSON.stringify([...draft].sort()) !== JSON.stringify([...committed].sort());
 
+  function toggle(iata: string) {
+    setDraft((prev) => {
+      const next = new Set(prev);
+      if (next.has(iata)) next.delete(iata);
+      else next.add(iata);
+      return next;
+    });
+  }
+
   function handleApply() {
-    onApply(draft.length === allIatas.length ? null : draft);
+    onApply(draft.size === allIatas.length ? null : [...draft]);
   }
 
   return (
@@ -29,32 +37,30 @@ export function CountrySelect({ value, onApply }: CountrySelectProps) {
           variant="ghost"
           size="sm"
           className="h-auto py-0.5 px-1.5 text-xs"
-          onClick={() => setDraft(allSelected ? [] : [...allIatas])}
+          onClick={() => setDraft(new Set(allSelected ? [] : allIatas))}
         >
           {allSelected ? "전체 해제" : "전체 선택"}
         </Button>
       </div>
-      <ToggleGroup
-        value={draft}
-        onValueChange={setDraft}
-        className="flex flex-wrap gap-1 justify-start"
-      >
-        {HUB_LIST.map((hub) => (
-          <ToggleGroupItem
-            key={hub.iata}
-            value={hub.iata}
-            size="sm"
-            className="text-xs px-2 py-1 h-auto transition-all
-              data-[state=on]:bg-primary/10 data-[state=on]:border-primary/30
-              hover:bg-muted hover:scale-105"
-          >
-            {hub.flag} {hub.city_kr}
-          </ToggleGroupItem>
-        ))}
-      </ToggleGroup>
+      <div className="flex flex-wrap gap-1">
+        {HUB_LIST.map((hub) => {
+          const on = draft.has(hub.iata);
+          return (
+            <Button
+              key={hub.iata}
+              variant={on ? "default" : "outline"}
+              size="sm"
+              className="text-xs h-7 px-2 transition-all hover:scale-105"
+              onClick={() => toggle(hub.iata)}
+            >
+              {hub.flag} {hub.city_kr}
+            </Button>
+          );
+        })}
+      </div>
       <div className="flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
-          {draft.length}/{allIatas.length}개국
+          {draft.size}/{allIatas.length}개국
         </p>
         <Button
           size="sm"
