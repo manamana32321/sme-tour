@@ -5,11 +5,14 @@ import "leaflet/dist/leaflet.css";
 import { HUBS } from "@/lib/hubs";
 import type { RouteEdge } from "@/lib/schemas";
 
+const START_COLOR = "#16a34a"; // green-600
+
 interface RouteMapProps {
   edges: RouteEdge[];
   visitedIata: string[];
   activeIndex: number | null;
   requiredCountries: string[] | null;
+  startHub: string;
   onEdgeHover: (index: number | null) => void;
   onEdgeClick: (index: number) => void;
 }
@@ -40,7 +43,7 @@ const AIR_COLOR = "#3b82f6";
 const GROUND_COLOR = "#f97316";
 const HIGHLIGHT_COLOR = "#a855f7";
 
-export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, onEdgeClick, onEdgeHover }: RouteMapProps) {
+export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, startHub, onEdgeClick, onEdgeHover }: RouteMapProps) {
   const cityCoords = buildCityCoordMap(edges);
   const selectedSet = requiredCountries ? new Set(requiredCountries) : null;
 
@@ -82,7 +85,8 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, o
     .map((hub) => {
       const isHighlighted =
         highlightedNodes.has(`${hub.iata}_Entry`) || highlightedNodes.has(`${hub.iata}_Exit`);
-      return { ...hub, visited: visitedIata.includes(hub.iata), isHighlighted };
+      const isStart = hub.iata === startHub;
+      return { ...hub, visited: visitedIata.includes(hub.iata), isHighlighted, isStart };
     });
 
   return (
@@ -123,23 +127,30 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, o
         );
       })}
 
-      {hubMarkers.map((hub) => (
-        <CircleMarker
-          key={`${hub.iata}-${hub.isHighlighted}`}
-          center={[hub.lat, hub.lon]}
-          radius={hub.isHighlighted ? 10 : hub.visited ? 7 : 4}
-          pathOptions={{
-            fillColor: hub.isHighlighted ? HIGHLIGHT_COLOR : hub.visited ? AIR_COLOR : "#94a3b8",
-            fillOpacity: hub.isHighlighted ? 1 : hub.visited ? 0.9 : 0.4,
-            color: hub.isHighlighted ? HIGHLIGHT_COLOR : hub.visited ? AIR_COLOR : "#94a3b8",
-            weight: hub.isHighlighted ? 2 : 1,
-          }}
-        >
-          <Tooltip direction="top" offset={[0, -8]}>
-            {hub.flag} {hub.iata} · {hub.city_kr}
-          </Tooltip>
-        </CircleMarker>
-      ))}
+      {hubMarkers.map((hub) => {
+        const color = hub.isHighlighted
+          ? HIGHLIGHT_COLOR
+          : hub.isStart
+            ? START_COLOR
+            : hub.visited ? AIR_COLOR : "#94a3b8";
+        return (
+          <CircleMarker
+            key={`${hub.iata}-${hub.isHighlighted}-${hub.isStart}`}
+            center={[hub.lat, hub.lon]}
+            radius={hub.isHighlighted ? 10 : hub.isStart ? 9 : hub.visited ? 7 : 4}
+            pathOptions={{
+              fillColor: color,
+              fillOpacity: hub.isHighlighted || hub.isStart ? 1 : hub.visited ? 0.9 : 0.4,
+              color,
+              weight: hub.isStart ? 3 : hub.isHighlighted ? 2 : 1,
+            }}
+          >
+            <Tooltip direction="top" offset={[0, -8]}>
+              {hub.isStart ? "📍 " : ""}{hub.flag} {hub.iata} · {hub.city_kr}
+            </Tooltip>
+          </CircleMarker>
+        );
+      })}
     </MapContainer>
   );
 }
