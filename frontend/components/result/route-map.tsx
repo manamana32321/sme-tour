@@ -82,17 +82,26 @@ export function RouteMap({ edges, visitedIata, activeIndex, onEdgeClick }: Route
         const isActive = activeIndex === line.index;
         const baseColor = line.category === "air" ? AIR_COLOR : GROUND_COLOR;
         return (
-          <Polyline
-            key={`line-${line.index}-${isActive}`}
-            positions={[line.from, line.to]}
-            pathOptions={{
-              color: isActive ? HIGHLIGHT_COLOR : baseColor,
-              weight: isActive ? 5 : 2,
-              opacity: 0.7,
-              dashArray: line.category === "ground" && !isActive ? "6 4" : undefined,
-            }}
-            eventHandlers={{ click: () => onEdgeClick(line.index) }}
-          />
+          <span key={`line-${line.index}`}>
+            {/* 투명 히트 영역 (클릭 반경 확대) */}
+            <Polyline
+              positions={[line.from, line.to]}
+              pathOptions={{ color: "transparent", weight: 20, opacity: 0 }}
+              eventHandlers={{ click: () => onEdgeClick(line.index) }}
+            />
+            {/* 실제 표시 에지 */}
+            <Polyline
+              key={`vis-${line.index}-${isActive}`}
+              positions={[line.from, line.to]}
+              pathOptions={{
+                color: isActive ? HIGHLIGHT_COLOR : baseColor,
+                weight: isActive ? 5 : 2,
+                opacity: 0.7,
+                dashArray: line.category === "ground" && !isActive ? "6 4" : undefined,
+              }}
+              interactive={false}
+            />
+          </span>
         );
       })}
 
