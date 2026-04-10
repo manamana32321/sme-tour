@@ -5,8 +5,9 @@ metadata:
   namespace: sme-tour
   annotations:
     cert-manager.io/cluster-issuer: letsencrypt-dns01
+    traefik.ingress.kubernetes.io/redirect-entry-point: https
 spec:
-  ingressClassName: nginx
+  ingressClassName: traefik
   tls:
     - hosts:
         - api.sme-tour.json-server.win
