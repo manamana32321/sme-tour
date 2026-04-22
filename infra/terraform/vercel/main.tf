@@ -48,6 +48,22 @@ resource "vercel_project" "sme_tour" {
   root_directory = "frontend"
 
   # Framework default (next build / .next). build/install/dev command 모두 null.
+
+  # 실제 Vercel 설정 반영 — drift 방지.
+  # deployment_type = "none" 유지해야 preview URL 팀원 공유 가능
+  # (provider default가 standard_protection이라 명시 필요).
+  vercel_authentication = {
+    deployment_type = "none"
+  }
+
+  # Vercel Pro 기본 skew protection.
+  skew_protection = "12 hours"
+
+  # OIDC: Vercel builds에 발급되는 short-lived token. team-level 기본.
+  oidc_token_config = {
+    enabled     = true
+    issuer_mode = "team"
+  }
 }
 
 resource "vercel_project_environment_variable" "api_base" {
@@ -55,6 +71,6 @@ resource "vercel_project_environment_variable" "api_base" {
   team_id    = var.vercel_team_id
   key        = "NEXT_PUBLIC_API_BASE"
   value      = var.api_base
-  target     = ["production", "preview"]
-  comment    = "K8s ingress에 배포된 sme-tour-engine API base URL"
+  target     = ["production"]
+  sensitive  = false
 }
