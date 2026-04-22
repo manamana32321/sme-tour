@@ -46,7 +46,6 @@ resource "vercel_project" "sme_tour" {
 
   # multi-root 레포: docs/engine/frontend/k8s/infra. Next.js는 frontend/ 에만.
   root_directory = "frontend"
-  node_version   = "24.x"
 
   # Framework default (next build / .next). build/install/dev command 모두 null.
 }
