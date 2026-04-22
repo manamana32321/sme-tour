@@ -1,0 +1,2 @@
+vercel_api_token = "" # Vercel Dashboard → Settings → Tokens. amang 레포에 쓰던 동일 토큰 재사용 가능 (사용자 개인 token, 모든 team scope 접근).
+vercel_team_id   = "team_aDiKenl6xun665nVWV49POd4"

@@ -1,0 +1,4 @@
+*.tfvars
+!*.tfvars.example
+.terraform/
+.terraform.lock.hcl
