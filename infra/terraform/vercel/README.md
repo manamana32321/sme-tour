@@ -79,7 +79,7 @@ terraform destroy
 
 | Resource | 설명 |
 |---|---|
-| `vercel_project.sme_tour` | Next.js · root=frontend · node 24.x · github integration |
+| `vercel_project.sme_tour` | Next.js · root=frontend · github integration |
 | `vercel_project_environment_variable.api_base` | `NEXT_PUBLIC_API_BASE` (production+preview) |
 
 ### Custom domain 추가 예시
