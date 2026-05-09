@@ -3,9 +3,11 @@
 import { MapContainer, TileLayer, Polyline, CircleMarker, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { HUBS } from "@/lib/hubs";
+import { DESIGN_TOKENS } from "@/lib/design-tokens";
 import type { RouteEdge } from "@/lib/schemas";
 
-const START_COLOR = "#16a34a"; // green-600
+const { markerStart, markerVisited, markerIdle, routeAir, routeGround, routeActive } =
+  DESIGN_TOKENS.map;
 
 interface RouteMapProps {
   edges: RouteEdge[];
@@ -38,10 +40,6 @@ function buildCityCoordMap(edges: RouteEdge[]): Map<string, [number, number]> {
   }
   return cityCoords;
 }
-
-const AIR_COLOR = "#3b82f6";
-const GROUND_COLOR = "#f97316";
-const HIGHLIGHT_COLOR = "#a855f7";
 
 export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, startHub, onEdgeClick, onEdgeHover }: RouteMapProps) {
   const cityCoords = buildCityCoordMap(edges);
@@ -98,7 +96,7 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, s
 
       {lines.map((line) => {
         const isActive = activeIndex === line.index;
-        const baseColor = line.category === "air" ? AIR_COLOR : GROUND_COLOR;
+        const baseColor = line.category === "air" ? routeAir : routeGround;
         return (
           <span key={`line-${line.index}`}>
             {/* 투명 히트 영역 (클릭 반경 확대) */}
@@ -116,7 +114,7 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, s
               key={`vis-${line.index}-${isActive}`}
               positions={[line.from, line.to]}
               pathOptions={{
-                color: isActive ? HIGHLIGHT_COLOR : baseColor,
+                color: isActive ? routeActive : baseColor,
                 weight: isActive ? 5 : 2,
                 opacity: 0.7,
                 dashArray: line.category === "ground" && !isActive ? "6 4" : undefined,
@@ -129,10 +127,10 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, s
 
       {hubMarkers.map((hub) => {
         const color = hub.isHighlighted
-          ? HIGHLIGHT_COLOR
+          ? routeActive
           : hub.isStart
-            ? START_COLOR
-            : hub.visited ? AIR_COLOR : "#94a3b8";
+            ? markerStart
+            : hub.visited ? markerVisited : markerIdle;
         return (
           <CircleMarker
             key={`${hub.iata}-${hub.isHighlighted}-${hub.isStart}`}
@@ -146,7 +144,7 @@ export function RouteMap({ edges, visitedIata, activeIndex, requiredCountries, s
             }}
           >
             <Tooltip direction="top" offset={[0, -8]}>
-              {hub.isStart ? "📍 " : ""}{hub.flag} {hub.iata} · {hub.city_kr}
+              {hub.flag} {hub.iata} · {hub.city_kr}{hub.isStart ? " (출발)" : ""}
             </Tooltip>
           </CircleMarker>
         );
