@@ -153,37 +153,65 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  /* DESIGN.md §13 dark tokens — voltage lightness 시프트, surface 반전 */
+  --voltage: #14a8b3;
+  --voltage-soft: #0a3438;
+  --voltage-strong: #3dc4cf;
+  --voltage-on: #ffffff;
+
+  --canvas: #191f28;
+  --surface-soft: #252b35;
+  --surface-card: #212833;
+  --surface-sub: #2c3340;
+
+  --hairline: #333d4b;
+  --hairline-soft: #252b35;
+
+  --ink: #f9fafb;
+  --body: #b0b8c1;
+  --placeholder: #4e5968;
+
+  /* Map / Semantic — light/dark 동일 (DESIGN.md §13.1 Iron Rule) */
+  --success: #15c47e;
+  --warning: #fb8800;
+  --map-marker-start: #3cb44a;
+  --map-marker-visited: #1f8cff;
+  --map-marker-idle: #b0b8c1;
+  --map-route-air: #924bdd;
+  --map-route-ground: #fd9727;
+
+  /* shadcn semantic — DESIGN.md dark values applied */
+  --background: #191f28;
+  --foreground: #f9fafb;
+  --card: #212833;
+  --card-foreground: #f9fafb;
+  --popover: #212833;
+  --popover-foreground: #f9fafb;
+  --primary: #14a8b3;
+  --primary-foreground: #ffffff;
+  --secondary: #2c3340;
+  --secondary-foreground: #f9fafb;
+  --muted: #2c3340;
+  --muted-foreground: #6b7684;
+  --accent: #252b35;
+  --accent-foreground: #f9fafb;
+  --destructive: #f04452;
+  --border: #333d4b;
+  --input: #333d4b;
+  --ring: #14a8b3;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #212833;
+  --sidebar-foreground: #f9fafb;
+  --sidebar-primary: #14a8b3;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2c3340;
+  --sidebar-accent-foreground: #f9fafb;
+  --sidebar-border: #333d4b;
+  --sidebar-ring: #14a8b3;
 }
 
 @layer base {
@@ -199,5 +227,17 @@
   }
   h1, h2, h3 {
     letter-spacing: var(--tracking-kr-tight);
+  }
+
+  /* DESIGN.md §14.2 — prefers-reduced-motion 글로벌 강제 */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
