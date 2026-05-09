@@ -1,5 +1,5 @@
 ---
-version: 0.2
+version: 0.3
 name: SME Tour
 description: |
   SME Tour는 시스템경영공학 종합설계 5조의 유럽 여행 경로 다목적 최적화 데모.
@@ -57,7 +57,7 @@ colors:
     hairline: "#333d4b"
     ink: "#f9fafb"
     body: "#b0b8c1"
-    muted: "#6b7684"
+    muted: "#9aa3ad"            # v0.3 — light(#8b95a1)보다 밝게, 다크 surface·voltage-soft 위 가독성 보장
 
 typography:
   font-family: "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
@@ -436,7 +436,7 @@ Light voltage `#0e7c86`를 lightness 시프트로 `#14a8b3`으로 매핑. Surfac
 | `hairline-soft` | `#f2f4f6` | `#252b35` | |
 | `ink` | `#191f28` | `#f9fafb` | |
 | `body` | `#4e5968` | `#b0b8c1` | |
-| `muted` | `#8b95a1` | `#6b7684` | dark는 살짝 어둡게(가독성) |
+| `muted` | `#8b95a1` | `#9aa3ad` | **다크는 라이트보다 밝게** (§13.3 Iron Rule) |
 | `placeholder` | `#b0b8c1` | `#4e5968` | dark에서 hairline보다 진하게 |
 | `success` / `warning` / `danger` | 동일 | 동일 | 의미 컬러 반전 X |
 | `map-*` (모든 토큰) | 동일 | 동일 | 카카오맵 관용 — 양 모드에서 가독 |
@@ -452,10 +452,11 @@ Light voltage `#0e7c86`를 lightness 시프트로 `#14a8b3`으로 매핑. Surfac
 
 ### 13.3 Iron Rules
 
+- **다크 모드의 모든 텍스트 토큰은 light 모드 대응 토큰보다 **밝거나 동등**해야 함** — `ink`/`body`/`muted`/`voltage` 모두 동일 원리. 다크에서 텍스트가 어두워지면 dark surface 대비 contrast 붕괴 (v0.2 → v0.3 수정 사례: muted `#6b7684` → `#9aa3ad`)
 - **다크 모드 voltage는 light보다 **밝게**, hover/active(strong)는 더 밝게** — 일반적인 light-dark 직관과 반대 방향이지만 dark surface 대비 시인성 보장
 - **shadow는 dark 모드에서 무효** — 단일 tier 정책은 light에만 적용, dark는 border + surface 단계로만 elevation 표현
 - **이미지/맵 타일은 그대로** — Carto Voyager는 light 톤이지만 의미 색이 본질이라 dark에서도 light tile 유지. 다크 맵 타일로 갈아끼우지 말 것
-- 새 토큰 추가 시 light/dark 모두 정의 필수 (Iteration Guide 룰에 반영)
+- **새 토큰 추가 시 light/dark 모두 정의 + AA 컨트라스트 검증 필수** — frontmatter `colors.dark` 블록과 §17.1 표를 동시 갱신
 
 ## 14. Motion
 
@@ -575,16 +576,32 @@ WCAG 2.1 AA 타겟. 종설 평가에서 접근성 검토 포인트가 잡힐 수
 
 ### 17.1 Color Contrast (검증됨)
 
+**Light mode:**
+
 | 조합 | 비율 | 결과 |
 |---|---|---|
-| `ink #191f28` on canvas | 17.4:1 | ✅ AAA |
+| `ink #191f28` on canvas `#ffffff` | 17.4:1 | ✅ AAA |
 | `body #4e5968` on canvas | 8.4:1 | ✅ AAA |
 | `voltage #0e7c86` on canvas | 4.6:1 | ✅ AA |
 | `voltage-on #ffffff` on voltage | 4.6:1 | ✅ AA |
 | `muted #8b95a1` on canvas | 3.6:1 | ⚠️ AA large text only (≥18px 또는 ≥14px bold) |
 | `danger #f04452` on canvas | 4.4:1 | ✅ AA |
 
-⚠️ **muted는 caption(12px) 본문 사용 금지** — 라벨/메타데이터(아이콘 옆 한 단어 등)에만. 본문은 body 이상.
+**Dark mode (v0.3):**
+
+| 조합 | 비율 | 결과 |
+|---|---|---|
+| `ink #f9fafb` on canvas `#191f28` | 16.7:1 | ✅ AAA |
+| `body #b0b8c1` on canvas | 11.1:1 | ✅ AAA |
+| `voltage #14a8b3` on canvas | 5.4:1 | ✅ AA |
+| `muted #9aa3ad` on canvas | 7.4:1 | ✅ AAA |
+| `muted #9aa3ad` on voltage-soft `#0a3438` | 5.1:1 | ✅ AA |
+| `body #b0b8c1` on voltage-soft | 6.7:1 | ✅ AA |
+| `ink #f9fafb` on voltage-soft | 12.4:1 | ✅ AAA |
+
+⚠️ **muted는 caption(12px) 본문 사용 금지** — 라이트 모드에서 AA 미통과. 라벨/메타데이터(아이콘 옆 한 단어 등)에만. 본문은 body 이상.
+
+ℹ️ **다크 모드 muted는 voltage-soft 위에서도 AA 통과** — 액티브 카드(`bg-voltage-soft`) 안의 detail 텍스트가 가독 (v0.2에서 발견된 회귀를 v0.3에서 수정).
 
 ### 17.2 Focus Visible
 
