@@ -104,3 +104,103 @@ class TestOrToolsFallback:
         solver = get_solver()
         # gurobipy 있으면 GurobiSolver, 없으면 OrToolsSolver
         assert solver.name in ("gurobi", "ortools")
+
+
+class TestOrToolsYVariable:
+    """y[d] 결정변수 도입 invariants."""
+
+    def test_y_values_exposed_after_solve(self, solver: OrToolsSolver, mini_graph) -> None:
+        """solve() 후 _last_y_values가 노출되어야."""
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+        )
+        solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        # mini fixture: 3 hubs (CDG, FCO, AMS) + 2 cities (NCE_City, MIL_City) = 5 keys
+        expected_keys = mini_graph.hubs | mini_graph.internal_cities
+        assert set(solver._last_y_values.keys()) == expected_keys
+        # 모든 값이 0 또는 1 (binary)
+        assert all(v in (0, 1) for v in solver._last_y_values.values())
+
+    def test_y_hub_matches_visited_iata(self, solver: OrToolsSolver, mini_graph) -> None:
+        """y[h] == 1 ↔ h가 visited_iata에 포함."""
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+        )
+        result = solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        for h in mini_graph.hubs:
+            visited = h in result.visited_iata
+            y_val = solver._last_y_values[h]
+            assert (y_val == 1) == visited, (
+                f"허브 {h}: y={y_val}, visited={visited}"
+            )
+
+    def test_y_city_matches_visited_cities(self, solver: OrToolsSolver, mini_graph) -> None:
+        """y[c] == 1 ↔ c가 visited_cities에 포함."""
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+        )
+        result = solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        for c in mini_graph.internal_cities:
+            visited = c in result.visited_cities
+            y_val = solver._last_y_values[c]
+            assert (y_val == 1) == visited, (
+                f"도시 {c}: y={y_val}, visited={visited}"
+            )
+
+    def test_y_hub_zero_means_not_in_route(self, solver: OrToolsSolver, mini_graph) -> None:
+        """y[h] == 0인 허브의 Entry/Exit는 route의 어느 노드로도 등장하지 않아야."""
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+            required_countries=["CDG"],  # CDG만 필수, FCO/AMS는 자유 (선택적 방문)
+        )
+        result = solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        skipped_hubs = {h for h in mini_graph.hubs if solver._last_y_values[h] == 0}
+        # required_countries=["CDG"]이면 비용 최소화 시 FCO/AMS는 보통 skip됨
+        # 0개일 가능성도 있으니 가드 추가 — solver가 모든 허브를 방문해도 이 테스트는 의미 없음
+        assert len(skipped_hubs) > 0, (
+            "테스트 전제: 최소 1개 허브가 skip되어야 의미 있는 검증 가능"
+        )
+        # 미방문 허브의 Entry/Exit는 route의 어느 쪽 노드(from 또는 to)로도 등장하지 않아야 한다
+        route_nodes = {e.from_node for e in result.route} | {e.to_node for e in result.route}
+        for h in skipped_hubs:
+            assert f"{h}_Entry" not in route_nodes, (
+                f"y[{h}]=0 인데 {h}_Entry가 route 노드에 있음"
+            )
+            assert f"{h}_Exit" not in route_nodes, (
+                f"y[{h}]=0 인데 {h}_Exit가 route 노드에 있음"
+            )
+
+    def test_required_countries_pinned_to_one(self, solver: OrToolsSolver, mini_graph) -> None:
+        """required_countries 안의 허브와 자식 도시는 y[d] == 1."""
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+            required_countries=["CDG", "FCO"],  # AMS는 자유
+        )
+        result = solver.solve(mini_graph, req)
+        assert result.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert solver._last_y_values is not None
+        # 허브 핀
+        assert solver._last_y_values["CDG"] == 1
+        assert solver._last_y_values["FCO"] == 1
+        # 자식 도시 핀 (mini_graph.city_to_hub: NCE_City→CDG, MIL_City→FCO)
+        assert solver._last_y_values["NCE_City"] == 1
+        assert solver._last_y_values["MIL_City"] == 1

@@ -38,9 +38,12 @@ class OrToolsSolver(BaseSolver):
 
     def __init__(self) -> None:
         """OR-Tools는 라이센스 불필요."""
+        self._last_y_values: dict[str, int] | None = None
 
     def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
         start = time_mod.perf_counter()
+        # 매 호출 시작 시 디버그 인터페이스 reset (이전 호출의 stale state 방지)
+        self._last_y_values = None
 
         edge_keys: list[tuple[str, str, str]] = []
         edge_cost: list[float] = []
@@ -70,21 +73,57 @@ class OrToolsSolver(BaseSolver):
         # 필수 방문 국가 결정
         required = set(req.required_countries) if req.required_countries else graph.hubs
 
+        # ── y[d] 도시 방문 결정변수 ──────────────────────────
+        # 내륙 도시 단위 (도시 1개 = y 1개)
+        y_city = {
+            c: model.new_bool_var(f"y_city_{c}")
+            for c in graph.internal_cities
+        }
+
+        # 허브 단위 (Entry/Exit 묶음 → y 1개)
+        y_hub = {
+            h: model.new_bool_var(f"y_hub_{h}")
+            for h in graph.hubs
+        }
+
+        # 허브 가상 노드 집합 (substring 매치보다 안전)
+        hub_virtual_nodes = {f"{h}_Entry" for h in graph.hubs} | {f"{h}_Exit" for h in graph.hubs}
+
+        # 허브 방문 = h_Entry로부터의 어떤 outflow든 1번 발생 (Hub_Stay 또는 Ground out)
+        # TSP 흐름 보존으로 h_Entry outflow 합은 0 또는 1 (방문 여부와 일치)
+        # 시작 허브는 start_out == 1로 인해 자동으로 y_hub == 1
+        for h in graph.hubs:
+            h_entry_out_idx = [
+                i for i, ek in enumerate(edge_keys)
+                if ek[0] == f"{h}_Entry"
+            ]
+            if not h_entry_out_idx:
+                raise ValueError(
+                    f"허브 {h}에 h_Entry outflow 에지가 없음 — 그래프 구조 이상"
+                )
+            model.add(sum(x[i] for i in h_entry_out_idx) == y_hub[h])
+
         # 흐름 보존
         for n in nodes:
             out_idx = [i for i, ek in enumerate(edge_keys) if ek[0] == n]
             in_idx = [i for i, ek in enumerate(edge_keys) if ek[1] == n]
-            if "_Entry" in n or "_Exit" in n:
+            if n in hub_virtual_nodes:
+                # 허브 가상 노드: 통과 흐름 보존 (in == out, 흐름 방향은 solver 자유)
                 model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
             else:
-                # 내륙 도시: 소속 국가가 required면 강제 방문, 아니면 선택적
-                hub = graph.city_to_hub.get(n)
-                if hub and hub in required:
-                    model.add(sum(x[i] for i in out_idx) == 1)
-                    model.add(sum(x[i] for i in in_idx) == 1)
-                else:
-                    # 선택적: in=out (0=0 허용)
-                    model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
+                # 내륙 도시: outflow == inflow == y[c]
+                model.add(sum(x[i] for i in out_idx) == y_city[n])
+                model.add(sum(x[i] for i in in_idx) == y_city[n])
+
+        # ── 필수 방문 핀 ─────────────────────────────────────
+        # required_countries 안의 허브 자체와 그 자식 내륙 도시 모두 강제 방문
+        for h in required:
+            if h in graph.hubs:  # 안전 가드 (잘못된 IATA 대비)
+                model.add(y_hub[h] == 1)
+        for c in graph.internal_cities:
+            hub = graph.city_to_hub.get(c)
+            if hub and hub in required:
+                model.add(y_city[c] == 1)
 
         # 출발지
         start_node = f"{req.start_hub}_Entry"
@@ -198,6 +237,12 @@ class OrToolsSolver(BaseSolver):
             curr = ev
             if curr == start_node:
                 break
+
+        # ── y[d] 결정변수 노출 ───────────────────────────────
+        self._last_y_values = {
+            **{c: int(solver.value(y_city[c])) for c in graph.internal_cities},
+            **{h: int(solver.value(y_hub[h])) for h in graph.hubs},
+        }
 
         return OptimizeResult(
             status=status,
