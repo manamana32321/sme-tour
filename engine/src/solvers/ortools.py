@@ -71,21 +71,30 @@ class OrToolsSolver(BaseSolver):
         # 필수 방문 국가 결정
         required = set(req.required_countries) if req.required_countries else graph.hubs
 
+        # ── y[d] 도시 방문 결정변수 ──────────────────────────
+        # 내륙 도시 단위 (도시 1개 = y 1개)
+        y_city = {
+            c: model.new_bool_var(f"y_city_{c}")
+            for c in graph.internal_cities
+        }
+
         # 흐름 보존
         for n in nodes:
             out_idx = [i for i, ek in enumerate(edge_keys) if ek[0] == n]
             in_idx = [i for i, ek in enumerate(edge_keys) if ek[1] == n]
             if "_Entry" in n or "_Exit" in n:
+                # 허브 가상 노드: 통과 흐름 보존 (Task 4에서 y[h] 추가)
                 model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
             else:
-                # 내륙 도시: 소속 국가가 required면 강제 방문, 아니면 선택적
-                hub = graph.city_to_hub.get(n)
-                if hub and hub in required:
-                    model.add(sum(x[i] for i in out_idx) == 1)
-                    model.add(sum(x[i] for i in in_idx) == 1)
-                else:
-                    # 선택적: in=out (0=0 허용)
-                    model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
+                # 내륙 도시: outflow == inflow == y[c]
+                model.add(sum(x[i] for i in out_idx) == y_city[n])
+                model.add(sum(x[i] for i in in_idx) == y_city[n])
+
+        # required_countries에 속한 내륙 도시는 y[c] = 1 강제
+        for c in graph.internal_cities:
+            hub = graph.city_to_hub.get(c)
+            if hub and hub in required:
+                model.add(y_city[c] == 1)
 
         # 출발지
         start_node = f"{req.start_hub}_Entry"
@@ -200,11 +209,12 @@ class OrToolsSolver(BaseSolver):
             if curr == start_node:
                 break
 
-        # ── y[d] 결정변수 노출 (Task 2: 임시로 visited 기반 derive) ──
-        all_destinations = graph.hubs | graph.internal_cities
+        # ── y[d] 결정변수 노출 ───────────────────────────────
+        # internal cities: 모델에서 직접
+        # hubs: Task 4 전까지는 visited_iata에서 derive (Task 4에서 모델 기반으로 교체)
         self._last_y_values = {
-            d: 1 if (d in visited_iata or d in visited_cities) else 0
-            for d in all_destinations
+            **{c: int(solver.value(y_city[c])) for c in graph.internal_cities},
+            **{h: 1 if h in visited_iata else 0 for h in graph.hubs},
         }
 
         return OptimizeResult(
