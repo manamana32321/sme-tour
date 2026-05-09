@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { formatKRW, formatEdgeDuration } from "@/lib/format";
 import { formatNode, formatMode, nodeCountry } from "@/lib/node-label";
 import type { RouteEdge } from "@/lib/schemas";
@@ -33,6 +34,7 @@ export function RouteEdgeCard({
   const ref = useRef<HTMLDivElement>(null);
   const { Icon: ModeIcon, label: modeLabel } = formatMode(edge.mode);
   const costRatio = totalCost > 0 ? ((edge.cost_won / totalCost) * 100).toFixed(1) : "0";
+  const detailId = `route-step-${index}-detail`;
 
   // 지도에서 클릭 → 리스트 자동 스크롤
   useEffect(() => {
@@ -49,11 +51,14 @@ export function RouteEdgeCard({
       }`}
     >
       {/* 트리거 */}
-      <div
-        className="flex items-center gap-3 py-2.5 px-3 cursor-pointer hover:bg-muted/50 transition-colors"
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={detailId}
         onClick={() => onToggle(index)}
         onMouseEnter={() => onHover(index)}
         onMouseLeave={() => { if (!isOpen) onHover(null); }}
+        className="w-full flex items-center gap-3 py-2.5 px-3 text-left hover:bg-muted/50 transition-colors focus-visible:outline-2 focus-visible:outline-voltage focus-visible:outline-offset-[-2px]"
       >
         <span className="text-xs text-muted-foreground w-6 text-right tabular-nums shrink-0">
           {String(index + 1).padStart(2, "0")}
@@ -71,12 +76,19 @@ export function RouteEdgeCard({
             {formatEdgeDuration(edge.time_minutes)}
           </div>
         </div>
-        <span className="text-xs text-muted-foreground shrink-0">{isOpen ? "▲" : "▼"}</span>
-      </div>
+        {isOpen ? (
+          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        ) : (
+          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+        )}
+      </button>
 
       {/* 바디 */}
       {isOpen && (
-        <div className="px-3 pb-3 pt-1 ml-9 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs border-t border-dashed">
+        <div
+          id={detailId}
+          className="px-3 pb-3 pt-1 ml-9 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs border-t border-dashed"
+        >
           <Detail label="교통수단" value={modeLabel} />
           <Detail label="비용 비율" value={`전체의 ${costRatio}%`} />
           <Detail

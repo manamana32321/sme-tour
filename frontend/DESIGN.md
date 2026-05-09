@@ -410,7 +410,11 @@ DESIGN.md 자체의 운영 룰. 6개월 뒤 본인이 까먹지 않게 박아둡
 대부분의 gap은 v0.2에서 정의됨(§13–18). 남은 미정의 영역:
 
 - **OG / favicon / 정식 로고** — 현재 `🇪🇺 SME Tour` 텍스트로 대체 ([page.tsx:44](app/page.tsx#L44)). 워드마크 + 노드-엣지 메타포 SVG는 별도 디자인 세션 필요. 인쇄·OG 이미지에서도 동일 문제.
-- **단계 카드 키보드 접근성** — 현재 `<div onClick>` 구조 ([route-edge-card.tsx:52](components/result/route-edge-card.tsx#L52)). `<button>` 시맨틱으로 마이그레이션 필요. §17 룰과 충돌하는 부분.
+
+미구현 (Phase 2 — 실제 필요 시점에 도입):
+
+- **§15 Form Validation** — 현재 슬라이더 위주라 invalid 상태 거의 없음. country-select 등 폼 인풋 도입 시점에 적용
+- **§18 Print CSS** — 종설 발표 일주일 전 도입 권장
 
 ## 13. Dark Mode
 
@@ -593,7 +597,7 @@ WCAG 2.1 AA 타겟. 종설 평가에서 접근성 검토 포인트가 잡힐 수
 
 - **Tab order = visual order** — 좌측 사이드바(인풋 5개) → 메인(copy URL → 결과 카드들)
 - **슬라이더**: ArrowLeft/Right 단계 조정 (Radix Slider 기본)
-- **단계 카드**: ⚠️ 현재 `<div onClick>` 구조 — `<button>` 시맨틱 마이그레이션 필요. Known Gaps 추적 중
+- **단계 카드**: `<button type="button" aria-expanded aria-controls>` 시맨틱 ([route-edge-card.tsx](components/result/route-edge-card.tsx)). Enter/Space 토글, focus-visible voltage outline
 - **ESC**: 모달/드롭다운 닫기 (shadcn 기본)
 - **Skip link 미설치** — 단일 페이지 SPA라 우선순위 낮음
 
@@ -607,7 +611,7 @@ WCAG 2.1 AA 타겟. 종설 평가에서 접근성 검토 포인트가 잡힐 수
 
 ### 17.5 Touch Targets
 
-모바일 인터랙티브 요소 최소 44×44px (iOS HIG / Material 48dp). 슬라이더 thumb, 버튼, 단계 카드 트리거 모두 충족. 단계 카드 chevron(▲▼)은 카드 전체 클릭 영역으로 해결.
+모바일 인터랙티브 요소 최소 44×44px (iOS HIG / Material 48dp). 슬라이더 thumb, 버튼, 단계 카드 트리거 모두 충족. 단계 카드 chevron(`ChevronUp`/`ChevronDown`)은 버튼 전체 클릭 영역으로 해결.
 
 ### 17.6 Iron Rules
 
