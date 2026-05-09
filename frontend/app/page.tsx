@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, parseAsArrayOf } from "nuqs";
-import { OptimizeForm } from "@/components/form/optimize-form";
+import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString } from "nuqs";
+import { OptimizeForm, type FocusField } from "@/components/form/optimize-form";
 import { SummaryCards } from "@/components/result/summary-cards";
 import { RouteList } from "@/components/result/route-list";
 import { InfeasibleBanner } from "@/components/shared/infeasible-banner";
@@ -17,6 +17,8 @@ const RouteMap = dynamic(
   { ssr: false, loading: () => <Skeleton className="h-[500px] w-full rounded-lg" /> }
 );
 
+const FOCUS_PULSE_MS = 2500;
+
 function PageInner() {
   const [params, setParams] = useQueryStates({
     budget_won: parseAsInteger.withDefault(10_000_000),
@@ -28,6 +30,13 @@ function PageInner() {
   const [requiredCountries, setRequiredCountries] = useState<string[] | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [focusField, setFocusField] = useState<FocusField>(null);
+
+  useEffect(() => {
+    if (focusField === null) return;
+    const t = setTimeout(() => setFocusField(null), FOCUS_PULSE_MS);
+    return () => clearTimeout(t);
+  }, [focusField]);
 
   const { result, loading, error } = useOptimize({
     budget_won: params.budget_won,
@@ -50,6 +59,7 @@ function PageInner() {
           start_hub={params.start_hub}
           w_cost={params.w_cost}
           required_countries={requiredCountries}
+          focusField={focusField}
           onBudgetChange={(v) => setParams({ budget_won: v })}
           onDeadlineChange={(v) => setParams({ deadline_days: v })}
           onHubChange={(v) => setParams({ start_hub: v })}
@@ -71,7 +81,16 @@ function PageInner() {
         </div>
 
         {error && <ErrorState message={error} onRetry={() => window.location.reload()} />}
-        {result?.status === "infeasible" && <InfeasibleBanner />}
+        {result?.status === "infeasible" && (
+          <InfeasibleBanner
+            requiredCountries={requiredCountries}
+            currentBudget={params.budget_won}
+            currentDays={params.deadline_days}
+            onFocusBudget={() => setFocusField("budget")}
+            onFocusDeadline={() => setFocusField("deadline")}
+            onFocusCountries={() => setFocusField("countries")}
+          />
+        )}
 
         {loading && !result && (
           <div className="space-y-4">

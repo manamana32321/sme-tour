@@ -1,42 +1,80 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { HUBS, IATA_CODES } from "@/lib/hubs";
+import { formatKRW } from "@/lib/format";
 
-export function InfeasibleBanner() {
-  const router = useRouter();
-  const sp = useSearchParams();
+const BUDGET_CAP = 30_000_000;
+const DAYS_CAP = 30;
 
-  function retryWithMoreBudget() {
-    const params = new URLSearchParams(sp.toString());
-    const budget = Number(params.get("budget_won") ?? 10_000_000);
-    params.set("budget_won", String(Math.min(Math.round(budget * 1.2), 30_000_000)));
-    router.replace(`/?${params.toString()}`);
-  }
+interface InfeasibleBannerProps {
+  requiredCountries: string[] | null;
+  currentBudget: number;
+  currentDays: number;
+  onFocusBudget: () => void;
+  onFocusDeadline: () => void;
+  onFocusCountries: () => void;
+}
 
-  function retryWithMoreDays() {
-    const params = new URLSearchParams(sp.toString());
-    const days = Number(params.get("deadline_days") ?? 14);
-    params.set("deadline_days", String(Math.min(days + 3, 30)));
-    router.replace(`/?${params.toString()}`);
-  }
+export function InfeasibleBanner({
+  requiredCountries,
+  currentBudget,
+  currentDays,
+  onFocusBudget,
+  onFocusDeadline,
+  onFocusCountries,
+}: InfeasibleBannerProps) {
+  const selectedCount = requiredCountries?.length ?? IATA_CODES.length;
+  const selectedNames = requiredCountries
+    ?.map((iata) => HUBS[iata]?.country_kr)
+    .filter(Boolean)
+    .join(", ");
+  const canDropCountry = (requiredCountries?.length ?? 0) >= 2;
+
+  const budgetMaxed = currentBudget >= BUDGET_CAP;
+  const daysMaxed = currentDays >= DAYS_CAP;
 
   return (
     <Card className="border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950">
       <CardContent className="p-6 text-center space-y-3">
         <p className="text-lg font-semibold">경로를 찾을 수 없어요</p>
         <p className="text-sm text-muted-foreground">
-          현재 조건에서 15개국 모두 방문할 수 있는 경로가 없습니다.
-          예산을 늘리거나 기간을 길게 잡아보세요.
+          {selectedNames ? (
+            <>
+              선택한 {selectedCount}개국({selectedNames})을 모두 방문할 경로가 없습니다.
+            </>
+          ) : (
+            <>15개국 모두 방문할 경로가 없습니다.</>
+          )}{" "}
+          입력 조건을 조정해보세요.
         </p>
-        <div className="flex gap-2 justify-center">
-          <Button variant="outline" size="sm" onClick={retryWithMoreBudget}>
-            예산 +20%
+        <div className="flex gap-2 justify-center flex-wrap">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={budgetMaxed}
+            onClick={onFocusBudget}
+          >
+            {budgetMaxed
+              ? `예산 한계 (${formatKRW(BUDGET_CAP)})`
+              : `예산 늘리기 (현재 ${formatKRW(currentBudget)})`}
           </Button>
-          <Button variant="outline" size="sm" onClick={retryWithMoreDays}>
-            기간 +3일
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={daysMaxed}
+            onClick={onFocusDeadline}
+          >
+            {daysMaxed
+              ? `기간 한계 (${DAYS_CAP}일)`
+              : `기간 늘리기 (현재 ${currentDays}일)`}
           </Button>
+          {canDropCountry && (
+            <Button variant="outline" size="sm" onClick={onFocusCountries}>
+              방문 국가 줄이기 (현재 {selectedCount}개국)
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
