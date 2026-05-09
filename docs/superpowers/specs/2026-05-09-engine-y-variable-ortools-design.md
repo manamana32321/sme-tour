@@ -55,8 +55,10 @@
 ∀ 허브 h:
   Σ x[(*, h_Entry)]  == Σ x[(h_Entry, *)]    # Entry 통과 흐름 보존 (기존과 동일)
   Σ x[(*, h_Exit)]   == Σ x[(h_Exit, *)]     # Exit 통과 흐름 보존 (기존과 동일)
-  Σ x[(h_Entry, h_Exit, "Hub_Stay")] == y[h]  # Hub_Stay 에지 사용 ↔ 허브 방문
+  Σ x[(h_Entry, *)] == y[h]                    # h_Entry outflow 합 == 허브 방문 여부
 ```
+
+**y_hub 정의 주의사항**: `Hub_Stay` 에지(graph.py)는 "허브에서 도시 방문 없이 통과"를 표현하는 0-cost shortcut일 뿐, 허브 자체의 방문 indicator가 아니다. 허브의 실제 방문 여부는 Air로 들어와 어떻게든 나가는지(Hub_Stay 또는 Ground out)로 결정되며, `h_Entry`의 outflow 합으로 깔끔하게 표현된다. TSP flow 보존이 이 합을 0 (미방문) 또는 1 (방문)로 자동 제한한다. 시작 허브는 `start_out == 1` 제약과 자연 일치 — 추가 처리 불필요.
 
 신 필수 방문 고정 (기존 의미 1:1 매칭):
 ```
