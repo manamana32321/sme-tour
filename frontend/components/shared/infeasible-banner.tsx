@@ -47,7 +47,7 @@ export function InfeasibleBanner({
           ) : (
             <>15개국 모두 방문할 경로가 없습니다.</>
           )}{" "}
-          좌측에서 조건을 조정해보세요.
+          입력 조건을 조정해보세요.
         </p>
         <div className="flex gap-2 justify-center flex-wrap">
           <Button
