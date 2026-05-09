@@ -9,6 +9,7 @@ import { RouteList } from "@/components/result/route-list";
 import { InfeasibleBanner } from "@/components/shared/infeasible-banner";
 import { ErrorState } from "@/components/shared/error-state";
 import { CopyUrlButton } from "@/components/shared/copy-url-button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOptimize } from "@/hooks/use-optimize";
 
@@ -77,7 +78,10 @@ function PageInner() {
                 ? `${result.route.length} steps · ${result.visited_iata.length}개국 · ${result.solver} · ${result.solve_time_ms}ms`
                 : "슬라이더를 조작하세요"}
           </p>
-          <CopyUrlButton />
+          <div className="flex items-center gap-1">
+            <CopyUrlButton />
+            <ThemeToggle />
+          </div>
         </div>
 
         {error && <ErrorState message={error} onRetry={() => window.location.reload()} />}
