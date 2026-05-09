@@ -87,37 +87,37 @@ class OrToolsSolver(BaseSolver):
         # 허브 가상 노드 집합 (substring 매치보다 안전)
         hub_virtual_nodes = {f"{h}_Entry" for h in graph.hubs} | {f"{h}_Exit" for h in graph.hubs}
 
-        # Hub_Stay 에지 사용량 = 허브 방문 여부
-        # Hub_Stay edge: ({h}_Entry → {h}_Exit, "Hub_Stay")
+        # 허브 방문 = h_Entry로부터의 어떤 outflow든 1번 발생 (Hub_Stay 또는 Ground out)
+        # TSP 흐름 보존으로 h_Entry outflow 합은 0 또는 1 (방문 여부와 일치)
+        # 시작 허브는 start_out == 1로 인해 자동으로 y_hub == 1
         for h in graph.hubs:
-            hub_stay_idx = [
+            h_entry_out_idx = [
                 i for i, ek in enumerate(edge_keys)
-                if ek[0] == f"{h}_Entry" and ek[1] == f"{h}_Exit" and ek[2] == "Hub_Stay"
+                if ek[0] == f"{h}_Entry"
             ]
-            # mini fixture / production 모두 허브당 정확히 1개의 Hub_Stay 에지 존재
-            if len(hub_stay_idx) != 1:
+            if not h_entry_out_idx:
                 raise ValueError(
-                    f"허브 {h}에 Hub_Stay 에지가 {len(hub_stay_idx)}개 (정확히 1개 필요)"
+                    f"허브 {h}에 h_Entry outflow 에지가 없음 — 그래프 구조 이상"
                 )
-            model.add(sum(x[i] for i in hub_stay_idx) == y_hub[h])
+            model.add(sum(x[i] for i in h_entry_out_idx) == y_hub[h])
 
         # 흐름 보존
         for n in nodes:
             out_idx = [i for i, ek in enumerate(edge_keys) if ek[0] == n]
             in_idx = [i for i, ek in enumerate(edge_keys) if ek[1] == n]
             if n in hub_virtual_nodes:
-                # 허브 가상 노드: 통과 흐름 보존 (Hub_Stay 사용 ↔ y[h])
+                # 허브 가상 노드: 통과 흐름 보존 (in == out, 흐름 방향은 solver 자유)
                 model.add(sum(x[i] for i in out_idx) == sum(x[i] for i in in_idx))
             else:
                 # 내륙 도시: outflow == inflow == y[c]
                 model.add(sum(x[i] for i in out_idx) == y_city[n])
                 model.add(sum(x[i] for i in in_idx) == y_city[n])
 
-        # required_countries에 속한 내륙 도시는 y[c] = 1 강제
-        # NOTE: 이 시점에서 required 안의 허브 자체에 대한 y_hub[h] == 1 핀은 없다.
-        # 자식 내륙 도시의 흐름 == 1이 Entry/Exit 통과 흐름 보존을 통해
-        # Hub_Stay 사용을 강제하고, 그것이 y_hub[h]를 1로 묶는 간접 경로로 동작.
-        # Task 5에서 y_hub[h] == 1 명시 핀으로 일원화 예정.
+        # ── 필수 방문 핀 ─────────────────────────────────────
+        # required_countries 안의 허브 자체와 그 자식 내륙 도시 모두 강제 방문
+        for h in required:
+            if h in graph.hubs:  # 안전 가드 (잘못된 IATA 대비)
+                model.add(y_hub[h] == 1)
         for c in graph.internal_cities:
             hub = graph.city_to_hub.get(c)
             if hub and hub in required:
