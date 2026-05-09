@@ -22,7 +22,9 @@ spec:
             - containerPort: 8000
           env:
             - name: CORS_ALLOWED_ORIGINS
-              value: "https://sme-tour.json-server.win,https://*.vercel.app,http://localhost:3000"
+              value: "https://sme-tour.json-server.win,http://localhost:3000"
+            - name: CORS_ALLOWED_ORIGIN_REGEX
+              value: "https://sme-tour-.*\\.vercel\\.app"
           livenessProbe:
             httpGet:
               path: /healthz
