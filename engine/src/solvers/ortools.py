@@ -38,6 +38,7 @@ class OrToolsSolver(BaseSolver):
 
     def __init__(self) -> None:
         """OR-Tools는 라이센스 불필요."""
+        self._last_y_values: dict[str, int] | None = None
 
     def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
         start = time_mod.perf_counter()
@@ -198,6 +199,13 @@ class OrToolsSolver(BaseSolver):
             curr = ev
             if curr == start_node:
                 break
+
+        # ── y[d] 결정변수 노출 (Task 2: 임시로 visited 기반 derive) ──
+        all_destinations = graph.hubs | graph.internal_cities
+        self._last_y_values = {
+            d: 1 if (d in visited_iata or d in visited_cities) else 0
+            for d in all_destinations
+        }
 
         return OptimizeResult(
             status=status,

@@ -104,3 +104,23 @@ class TestOrToolsFallback:
         solver = get_solver()
         # gurobipy 있으면 GurobiSolver, 없으면 OrToolsSolver
         assert solver.name in ("gurobi", "ortools")
+
+
+class TestOrToolsYVariable:
+    """y[d] 결정변수 도입 invariants."""
+
+    def test_y_values_exposed_after_solve(self, solver: OrToolsSolver, mini_graph) -> None:
+        """solve() 후 _last_y_values가 노출되어야."""
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+        )
+        solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        # mini fixture: 3 hubs (CDG, FCO, AMS) + 2 cities (NCE_City, MIL_City) = 5 keys
+        expected_keys = mini_graph.hubs | mini_graph.internal_cities
+        assert set(solver._last_y_values.keys()) == expected_keys
+        # 모든 값이 0 또는 1 (binary)
+        assert all(v in (0, 1) for v in solver._last_y_values.values())
