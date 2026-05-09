@@ -55,6 +55,7 @@ class GurobiSolver(BaseSolver):
         Raises:
             SolverInitializationError: 환경변수 누락 또는 WLS 인증 실패.
         """
+        self._last_y_values: dict[str, int] | None = None
         try:
             self._env = gp.Env(empty=True)
             self._env.setParam("LicenseID", os.environ["GUROBI_LICENSE_ID"])
@@ -74,6 +75,7 @@ class GurobiSolver(BaseSolver):
     def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
         """그래프와 사용자 제약으로 Clustered TSP 최적해를 찾는다."""
         start = time_mod.perf_counter()
+        self._last_y_values = None
 
         # Graph.edges → Gurobi addVars 호환 dict
         edge_dict: dict[tuple[str, str, str], dict[str, float]] = {
@@ -109,6 +111,24 @@ class GurobiSolver(BaseSolver):
         # ── 결정 변수 ────────────────────────────────────────
         x = m.addVars(edge_dict.keys(), vtype=GRB.BINARY, name="x")
 
+        # ── y[d] 도시 방문 결정변수 ──────────────────────────
+        y_city = m.addVars(graph.internal_cities, vtype=GRB.BINARY, name="y_city")
+        y_hub = m.addVars(graph.hubs, vtype=GRB.BINARY, name="y_hub")
+
+        # 허브 가상 노드 집합 (substring 매치보다 안전)
+        hub_virtual_nodes = {f"{h}_Entry" for h in graph.hubs} | {f"{h}_Exit" for h in graph.hubs}
+
+        # 허브 방문 = h_Entry로부터의 어떤 outflow든 1번 발생 (Hub_Stay 또는 Ground out)
+        # TSP 흐름 보존으로 h_Entry outflow 합은 0 또는 1 (방문 여부와 일치)
+        # 시작 허브는 start_out == 1로 인해 자동으로 y_hub == 1
+        for h in graph.hubs:
+            entry_out_edges = [e for e in edge_dict if e[0] == f"{h}_Entry"]
+            if not entry_out_edges:
+                raise ValueError(
+                    f"허브 {h}에 h_Entry outflow 에지가 없음 — 그래프 구조 이상"
+                )
+            m.addConstr(gp.quicksum(x[e] for e in entry_out_edges) == y_hub[h])
+
         # ── 예산/시간 제약 ───────────────────────────────────
         m.addConstr(gp.quicksum(edge_dict[e]["cost"] * x[e] for e in edge_dict) <= budget_scaled)
         m.addConstr(gp.quicksum(edge_dict[e]["time"] * x[e] for e in edge_dict) <= deadline)
@@ -124,23 +144,26 @@ class GurobiSolver(BaseSolver):
         required = set(req.required_countries) if req.required_countries else graph.hubs
 
         for n in graph.virtual_nodes:
-            if "_Entry" in n or "_Exit" in n:
-                # 허브 노드: in-flow = out-flow
+            if n in hub_virtual_nodes:
+                # 허브 가상 노드: 통과 흐름 보존 (in == out, 흐름 방향은 solver 자유)
                 m.addConstr(
                     gp.quicksum(x[e] for e in edge_dict if e[0] == n)
                     == gp.quicksum(x[e] for e in edge_dict if e[1] == n)
                 )
             else:
-                # 내륙 도시: 소속 국가가 required면 강제, 아니면 선택적
-                hub = graph.city_to_hub.get(n)
-                if hub and hub in required:
-                    m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[0] == n) == 1)
-                    m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[1] == n) == 1)
-                else:
-                    m.addConstr(
-                        gp.quicksum(x[e] for e in edge_dict if e[0] == n)
-                        == gp.quicksum(x[e] for e in edge_dict if e[1] == n)
-                    )
+                # 내륙 도시: outflow == inflow == y[c]
+                m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[0] == n) == y_city[n])
+                m.addConstr(gp.quicksum(x[e] for e in edge_dict if e[1] == n) == y_city[n])
+
+        # ── 필수 방문 핀 ─────────────────────────────────────
+        # required_countries 안의 허브 자체와 그 자식 내륙 도시 모두 강제 방문
+        for h in required:
+            if h in graph.hubs:  # 안전 가드 (잘못된 IATA 대비)
+                m.addConstr(y_hub[h] == 1)
+        for c in graph.internal_cities:
+            hub = graph.city_to_hub.get(c)
+            if hub and hub in required:
+                m.addConstr(y_city[c] == 1)
 
         # ── 출발지 제약 ─────────────────────────────────────
         start_node = f"{req.start_hub}_Entry"
@@ -241,6 +264,12 @@ class GurobiSolver(BaseSolver):
 
             if not found or curr == start_node:
                 break
+
+        # ── y[d] 결정변수 노출 ───────────────────────────────
+        self._last_y_values = {
+            **{c: int(round(y_city[c].X)) for c in graph.internal_cities},
+            **{h: int(round(y_hub[h].X)) for h in graph.hubs},
+        }
 
         return OptimizeResult(
             status=status,
