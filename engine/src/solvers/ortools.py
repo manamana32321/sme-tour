@@ -42,6 +42,8 @@ class OrToolsSolver(BaseSolver):
 
     def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
         start = time_mod.perf_counter()
+        # 매 호출 시작 시 디버그 인터페이스 reset (이전 호출의 stale state 방지)
+        self._last_y_values = None
 
         edge_keys: list[tuple[str, str, str]] = []
         edge_cost: list[float] = []

@@ -166,10 +166,16 @@ class TestOrToolsYVariable:
             deadline_days=30,
             start_hub="CDG",
             w_cost=0.5,
+            required_countries=["CDG"],  # CDG만 필수, FCO/AMS는 자유 (선택적 방문)
         )
         result = solver.solve(mini_graph, req)
         assert solver._last_y_values is not None
         skipped_hubs = {h for h in mini_graph.hubs if solver._last_y_values[h] == 0}
+        # required_countries=["CDG"]이면 비용 최소화 시 FCO/AMS는 보통 skip됨
+        # 0개일 가능성도 있으니 가드 추가 — solver가 모든 허브를 방문해도 이 테스트는 의미 없음
+        assert len(skipped_hubs) > 0, (
+            "테스트 전제: 최소 1개 허브가 skip되어야 의미 있는 검증 가능"
+        )
         # 미방문 허브의 Entry/Exit는 route의 어느 쪽 노드(from 또는 to)로도 등장하지 않아야 한다
         route_nodes = {e.from_node for e in result.route} | {e.to_node for e in result.route}
         for h in skipped_hubs:
