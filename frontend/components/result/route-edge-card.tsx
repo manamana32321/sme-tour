@@ -31,7 +31,7 @@ export function RouteEdgeCard({
   onHover,
 }: RouteEdgeCardProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const mode = formatMode(edge.mode);
+  const { Icon: ModeIcon, label: modeLabel } = formatMode(edge.mode);
   const costRatio = totalCost > 0 ? ((edge.cost_won / totalCost) * 100).toFixed(1) : "0";
 
   // 지도에서 클릭 → 리스트 자동 스크롤
@@ -45,7 +45,7 @@ export function RouteEdgeCard({
     <div
       ref={ref}
       className={`border-b last:border-b-0 transition-colors ${
-        isActive ? "bg-purple-50 dark:bg-purple-950/30" : ""
+        isActive ? "bg-voltage-soft" : ""
       }`}
     >
       {/* 트리거 */}
@@ -58,12 +58,12 @@ export function RouteEdgeCard({
         <span className="text-xs text-muted-foreground w-6 text-right tabular-nums shrink-0">
           {String(index + 1).padStart(2, "0")}
         </span>
-        <span className="text-base shrink-0">{mode.icon}</span>
+        <ModeIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium truncate">
             {formatNode(edge.from_node)} → {formatNode(edge.to_node)}
           </div>
-          <div className="text-xs text-muted-foreground">{mode.label}</div>
+          <div className="text-xs text-muted-foreground">{modeLabel}</div>
         </div>
         <div className="text-right shrink-0">
           <div className="text-sm tabular-nums">{formatKRW(edge.cost_won)}</div>
@@ -77,7 +77,7 @@ export function RouteEdgeCard({
       {/* 바디 */}
       {isOpen && (
         <div className="px-3 pb-3 pt-1 ml-9 grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs border-t border-dashed">
-          <Detail label="교통수단" value={`${mode.icon} ${mode.label}`} />
+          <Detail label="교통수단" value={modeLabel} />
           <Detail label="비용 비율" value={`전체의 ${costRatio}%`} />
           <Detail
             label="누적 비용"

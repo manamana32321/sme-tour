@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { ListOrdered } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RouteEdgeCard } from "./route-edge-card";
 import type { RouteEdge } from "@/lib/schemas";
@@ -39,7 +40,10 @@ export function RouteList({ edges, totalCost, activeIndex, openIndex, onActiveCh
   return (
     <Card className="flex flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm">📍 경로 상세 ({edges.length} steps)</CardTitle>
+        <CardTitle className="flex items-center gap-1.5 text-sm">
+          <ListOrdered className="h-4 w-4 text-muted-foreground" aria-hidden />
+          경로 상세 ({edges.length} steps)
+        </CardTitle>
       </CardHeader>
       <CardContent className="p-0 max-h-[600px] overflow-auto">
         {edges.map((edge, i) => (

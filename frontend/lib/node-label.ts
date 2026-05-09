@@ -1,5 +1,6 @@
 /** 가상 노드명 → 사람이 읽을 수 있는 라벨 변환. */
 
+import { Plane, Train, RefreshCw, HelpCircle, type LucideIcon } from "lucide-react";
 import { HUBS } from "./hubs";
 
 /**
@@ -25,25 +26,23 @@ export function formatNode(node: string): string {
 }
 
 /**
- * `Air_KLM` → `✈️ KLM`
- * `Ground_TGV INOUI(Train)` → `🚂 TGV INOUI`
- * `Hub_Stay` → `🔄 공항 경유`
+ * `Air_KLM` → `<Plane /> KLM`
+ * `Ground_TGV INOUI(Train)` → `<Train /> TGV INOUI`
+ * `Hub_Stay` → `<RefreshCw /> 공항 경유`
  */
-export function formatMode(mode: string): { icon: string; label: string } {
+export function formatMode(mode: string): { Icon: LucideIcon; label: string } {
   if (mode === "Hub_Stay") {
-    return { icon: "🔄", label: "공항 경유" };
+    return { Icon: RefreshCw, label: "공항 경유" };
   }
   if (mode.startsWith("Air_")) {
-    return { icon: "✈️", label: mode.replace(/^Air_/, "") };
+    return { Icon: Plane, label: mode.replace(/^Air_/, "") };
   }
   if (mode.startsWith("Ground_")) {
-    // "Ground_TGV INOUI(Train)" → "TGV INOUI"
     const raw = mode.replace(/^Ground_/, "");
-    // Remove parenthetical transport type suffix like "(Train)", "(Bus)"
     const clean = raw.replace(/\s*\([^)]*\)\s*$/, "");
-    return { icon: "🚂", label: clean || raw };
+    return { Icon: Train, label: clean || raw };
   }
-  return { icon: "❓", label: mode };
+  return { Icon: HelpCircle, label: mode };
 }
 
 /** 노드에서 국가 정보 추출 (허브만 가능, 내륙 도시는 null) */

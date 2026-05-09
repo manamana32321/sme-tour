@@ -23,20 +23,3 @@ export function formatEdgeDuration(minutes: number): string {
   return `${h}시간 ${m}분`;
 }
 
-/** 카테고리 → 이모지 */
-export function categoryIcon(category: "air" | "ground" | "hub_stay"): string {
-  switch (category) {
-    case "air": return "✈️";
-    case "ground": return "🏘️";
-    case "hub_stay": return "🔄";
-  }
-}
-
-/** 카테고리 → 한국어 라벨 */
-export function categoryLabel(category: "air" | "ground" | "hub_stay"): string {
-  switch (category) {
-    case "air": return "항공";
-    case "ground": return "지상";
-    case "hub_stay": return "경유";
-  }
-}
