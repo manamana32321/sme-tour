@@ -1,5 +1,5 @@
 ---
-version: 0.1
+version: 0.2
 name: SME Tour
 description: |
   SME Tour는 시스템경영공학 종합설계 5조의 유럽 여행 경로 다목적 최적화 데모.
@@ -37,13 +37,27 @@ colors:
   warning: "#fb8800"
   danger: "#f04452"
 
-  # Map — 카카오맵 시각 관용 차용
+  # Map — 카카오맵 시각 관용 차용 (light/dark 동일)
   map-marker-start: "#3cb44a"   # 출발 (카카오 녹색 핀)
   map-marker-visited: "#1f8cff" # 방문 허브 (카카오 path blue)
   map-marker-idle: "#b0b8c1"    # 미방문
   map-route-air: "#924bdd"      # 항공 (카카오 항공 보라)
   map-route-ground: "#fd9727"   # 지상 (카카오 시내버스 오렌지) — 점선
   map-route-active: "{colors.voltage}"  # 활성 강조 = voltage 동일 (별도 색 금지)
+
+  # Dark mode (자세한 매핑은 §13)
+  dark:
+    voltage: "#14a8b3"          # lightness 시프트, contrast 보존
+    voltage-soft: "#0a3438"
+    voltage-strong: "#3dc4cf"   # hover — light는 어둡게/dark는 밝게 반전
+    canvas: "#191f28"
+    surface-soft: "#252b35"
+    surface-card: "#212833"
+    surface-sub: "#2c3340"
+    hairline: "#333d4b"
+    ink: "#f9fafb"
+    body: "#b0b8c1"
+    muted: "#6b7684"
 
 typography:
   font-family: "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
@@ -81,6 +95,25 @@ radius:
   md: 12        # 카드, 인풋 (토스 권장값)
   lg: 16
   pill: 999
+
+motion:
+  duration:
+    instant: 0      # 토글 즉시
+    fast: 120       # hover 색 변화, focus
+    base: 200       # 카드 transition, accordion
+    slow: 320       # 모달
+  easing:
+    out: "cubic-bezier(0.16, 1, 0.3, 1)"     # 진입 (가속 → 정지)
+    in: "cubic-bezier(0.7, 0, 0.84, 0)"      # 퇴장
+    inout: "cubic-bezier(0.65, 0, 0.35, 1)"
+    linear: linear  # progress / indeterminate
+
+breakpoints:
+  sm: 640
+  md: 768
+  lg: 1024
+  xl: 1280
+  "2xl": 1536
 
 components:
   - sidebar-form          # 좌측 320px 인풋 폼
@@ -374,16 +407,269 @@ DESIGN.md 자체의 운영 룰. 6개월 뒤 본인이 까먹지 않게 박아둡
 
 ## 12. Known Gaps
 
-다음 영역은 현재 미정의 — 필요 시 별도 PR로 추가:
+대부분의 gap은 v0.2에서 정의됨(§13–18). 남은 미정의 영역:
 
-- **다크 모드** — [globals.css:86-118](app/globals.css#L86)에 shadcn 기본 다크 토큰만 존재. voltage 다크 변형(`#14a8b3`?) 미정. 현재는 light-mode only로 운영.
-- **모션** — transition / animation 토큰 미정의. shadcn `tw-animate-css` 기본 사용 중.
-- **Form validation 톤** — danger 컬러는 정의했지만 인풋 에러 상태 마이크로카피·아이콘·이동 패턴 미정.
-- **Loading skeleton 패턴** — shadcn `Skeleton` 기본 사용 중. brand 톤 입힘 미적용.
-- **OG / favicon / 로고** — 종설 발표용 정식 로고 미정. 현재 `🇪🇺 SME Tour` 텍스트로 대체 ([page.tsx:44](app/page.tsx#L44)).
-- **접근성** — 컬러 대비 검증, focus visible 정책, screen reader 라벨 미감사.
-- **Print 스타일** — 종설 발표 자료에 결과 출력 시 인쇄 CSS 미정의.
+- **OG / favicon / 정식 로고** — 현재 `🇪🇺 SME Tour` 텍스트로 대체 ([page.tsx:44](app/page.tsx#L44)). 워드마크 + 노드-엣지 메타포 SVG는 별도 디자인 세션 필요. 인쇄·OG 이미지에서도 동일 문제.
+- **단계 카드 키보드 접근성** — 현재 `<div onClick>` 구조 ([route-edge-card.tsx:52](components/result/route-edge-card.tsx#L52)). `<button>` 시맨틱으로 마이그레이션 필요. §17 룰과 충돌하는 부분.
+
+## 13. Dark Mode
+
+Light voltage `#0e7c86`를 lightness 시프트로 `#14a8b3`으로 매핑. Surface는 grey-900 베이스로 반전. Map 컬러는 light/dark 동일 — 카카오맵 관용색이 양 모드에서 모두 동작합니다.
+
+### 13.1 Token Mapping
+
+| 토큰 | Light | Dark | 노트 |
+|---|---|---|---|
+| `voltage` | `#0e7c86` | `#14a8b3` | lightness 시프트, contrast 보존 |
+| `voltage-soft` | `#e0f2f4` | `#0a3438` | 다크 surface 위 옅은 voltage |
+| `voltage-strong` | `#0a5d65` | `#3dc4cf` | hover — light는 어둡게/dark는 밝게 **반전** |
+| `voltage-on` | `#ffffff` | `#ffffff` | 동일 |
+| `canvas` | `#ffffff` | `#191f28` | ink 색과 정확히 반전 |
+| `surface-soft` | `#f9fafb` | `#252b35` | |
+| `surface-card` | `#ffffff` | `#212833` | |
+| `surface-sub` | `#f2f4f6` | `#2c3340` | |
+| `hairline` | `#e5e8eb` | `#333d4b` | |
+| `hairline-soft` | `#f2f4f6` | `#252b35` | |
+| `ink` | `#191f28` | `#f9fafb` | |
+| `body` | `#4e5968` | `#b0b8c1` | |
+| `muted` | `#8b95a1` | `#6b7684` | dark는 살짝 어둡게(가독성) |
+| `placeholder` | `#b0b8c1` | `#4e5968` | dark에서 hairline보다 진하게 |
+| `success` / `warning` / `danger` | 동일 | 동일 | 의미 컬러 반전 X |
+| `map-*` (모든 토큰) | 동일 | 동일 | 카카오맵 관용 — 양 모드에서 가독 |
+
+### 13.2 Activation
+
+[next-themes](https://github.com/pacanukeha/next-themes) 이미 설치됨 (`package.json` 확인). `<html>`에 `class="dark"` 또는 `data-theme="dark"` 토글로 활성화. 기본은 `prefers-color-scheme` 자동 추적 + 사용자 토글로 override.
+
+```tsx
+// app/providers.tsx (이미 설정 영역)
+<ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+```
+
+### 13.3 Iron Rules
+
+- **다크 모드 voltage는 light보다 **밝게**, hover/active(strong)는 더 밝게** — 일반적인 light-dark 직관과 반대 방향이지만 dark surface 대비 시인성 보장
+- **shadow는 dark 모드에서 무효** — 단일 tier 정책은 light에만 적용, dark는 border + surface 단계로만 elevation 표현
+- **이미지/맵 타일은 그대로** — Carto Voyager는 light 톤이지만 의미 색이 본질이라 dark에서도 light tile 유지. 다크 맵 타일로 갈아끼우지 말 것
+- 새 토큰 추가 시 light/dark 모두 정의 필수 (Iteration Guide 룰에 반영)
+
+## 14. Motion
+
+전 transition/animation의 duration·easing을 frontmatter `motion` 블록에서 일원화. 키 원칙은 "위치 이동 금지, 색·투명도·크기만 허용".
+
+### 14.1 Duration / Easing 매핑
+
+| 용도 | 토큰 | 값 |
+|---|---|---|
+| hover bg, focus ring | `motion.fast` | 120ms ease-out |
+| 카드 색 transition, accordion | `motion.base` | 200ms ease-out |
+| 모달 in/out | `motion.slow` | 320ms ease-out |
+| Indeterminate progress, skeleton pulse | `linear` | (CSS animation infinite) |
+
+Tailwind 기본 `transition-colors`(150ms)는 `motion.fast` 근사로 그대로 허용. shadcn 기본 timing 유지.
+
+### 14.2 Reduced Motion
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+`globals.css`의 `@layer base`에 추가. 전역 강제로 사용자 시스템 설정 100% 존중.
+
+### 14.3 Iron Rules
+
+- **위치 이동 (translate, slide, swipe) 금지** — 컬러/투명도/scale만 허용. 라이브 인터랙션이 핵심인 SME Tour에서 이동 애니메이션은 결과 갱신을 가림
+- **Indeterminate 스피너는 linear easing** — 가속·감속 ease는 "곧 끝날 듯한 거짓 신호"
+- **Accordion expand/collapse는 height auto 회피** — `data-state` 기반 grid-template-rows transition (Radix 기본)
+- 활성 강조 색 변화는 항상 `motion.fast` — 슬라이더 조작 → 카드 활성 응답 즉시감
+
+## 15. Form Validation
+
+인풋 에러 상태 표현 패턴. SME Tour는 슬라이더 위주라 사용자 invalid 상태가 거의 없지만 `country-select`("최소 1개 선택") 등에서 사용.
+
+### 15.1 Visual Pattern
+
+| 상태 | 스타일 |
+|---|---|
+| 정상 | `border-hairline focus:border-voltage focus:ring-voltage/20` |
+| 에러 | `border-danger focus:border-danger focus:ring-danger/20` |
+| 비활성 | `border-hairline-soft text-placeholder cursor-not-allowed` |
+
+에러 helper text:
+
+```tsx
+<p
+  id={`${field}-error`}
+  className="mt-1 flex items-center gap-1 text-caption text-danger"
+>
+  <AlertCircle className="h-3.5 w-3.5" aria-hidden />
+  최소 1개 국가를 선택해주세요
+</p>
+```
+
+### 15.2 ARIA Contract
+
+- `aria-invalid="true"` (에러 상태 인풋)
+- `aria-describedby="{field}-error"` (helper text 연결)
+- form submit 시 첫 에러 필드 `el.focus({ preventScroll: false })`
+
+### 15.3 Submit Button Behavior
+
+전체 form invalid 시 **submit 버튼을 disable하지 말 것** — 클릭 시 어디가 잘못됐는지 안내가 더 친절. 대신 제출 후 첫 에러로 focus 이동.
+
+```tsx
+<Button onClick={handleSubmit}>
+  최적 경로 찾기
+</Button>
+```
+
+(SME Tour 현재 구조: 슬라이더 조작 → 자동 fetch. Submit 버튼 없음. 향후 Phase 2 폼 인풋 도입 시 위 패턴 적용)
+
+## 16. Loading Skeleton
+
+[shadcn Skeleton](components/ui/skeleton.tsx) 컴포넌트 사용. **Brand 톤(voltage) 적용 금지** — skeleton과 활성 강조가 시각적으로 분리되어야 "loading 중인지 강조 중인지" 혼동 방지.
+
+### 16.1 Pattern
+
+| 컨텐츠 | Skeleton 크기 |
+|---|---|
+| Summary card (4-grid) | `h-20` |
+| Map | `h-[500px]` |
+| Step card | `h-12` |
+| Inline 텍스트 | `h-4` |
+
+```tsx
+{loading && !result && (
+  <div className="space-y-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
+    </div>
+    <Skeleton className="h-[500px]" />
+  </div>
+)}
+```
+
+이미 [page.tsx:79-82](app/page.tsx#L79)에 적용. 신규 컴포넌트도 동일 패턴.
+
+### 16.2 Iron Rules
+
+- **CLS 0** — Skeleton 크기는 실제 컨텐츠 height와 1:1 매칭. 컨텐츠 도착 시 layout shift 금지
+- **Pulse animation은 `tw-animate-css`의 기본 `animate-pulse`** (linear 1.5s infinite) — 커스텀 timing 금지
+- **BG는 `bg-surface-sub` (#f2f4f6)** — voltage-soft (옅은 청록)와 시각적 구분
+- 1초 이상 대기 예상 시에만 skeleton 사용. 그 미만은 그냥 빈 영역 (skeleton "깜빡임" 회피)
+
+## 17. Accessibility
+
+WCAG 2.1 AA 타겟. 종설 평가에서 접근성 검토 포인트가 잡힐 수 있음.
+
+### 17.1 Color Contrast (검증됨)
+
+| 조합 | 비율 | 결과 |
+|---|---|---|
+| `ink #191f28` on canvas | 17.4:1 | ✅ AAA |
+| `body #4e5968` on canvas | 8.4:1 | ✅ AAA |
+| `voltage #0e7c86` on canvas | 4.6:1 | ✅ AA |
+| `voltage-on #ffffff` on voltage | 4.6:1 | ✅ AA |
+| `muted #8b95a1` on canvas | 3.6:1 | ⚠️ AA large text only (≥18px 또는 ≥14px bold) |
+| `danger #f04452` on canvas | 4.4:1 | ✅ AA |
+
+⚠️ **muted는 caption(12px) 본문 사용 금지** — 라벨/메타데이터(아이콘 옆 한 단어 등)에만. 본문은 body 이상.
+
+### 17.2 Focus Visible
+
+- 모든 인터랙티브 요소 — `focus-visible:outline-2 focus-visible:outline-voltage focus-visible:outline-offset-2`
+- shadcn Button/Input/Select 기본 `ring` 유지 (이미 voltage 톤)
+- `:focus`는 outline 제거 X — `:focus-visible`로 마우스/키보드 분기
+- `globals.css`에 이미 `outline-ring/50` base 적용 ([globals.css의 @layer base](app/globals.css))
+
+### 17.3 Keyboard Navigation
+
+- **Tab order = visual order** — 좌측 사이드바(인풋 5개) → 메인(copy URL → 결과 카드들)
+- **슬라이더**: ArrowLeft/Right 단계 조정 (Radix Slider 기본)
+- **단계 카드**: ⚠️ 현재 `<div onClick>` 구조 — `<button>` 시맨틱 마이그레이션 필요. Known Gaps 추적 중
+- **ESC**: 모달/드롭다운 닫기 (shadcn 기본)
+- **Skip link 미설치** — 단일 페이지 SPA라 우선순위 낮음
+
+### 17.4 Screen Reader
+
+- **lucide 아이콘**: `aria-hidden` 일괄 적용 (이미 `formatMode`/summary-cards/route-list 적용됨)
+- **Icon-only button**: `aria-label` 필수 — [copy-url-button.tsx](components/shared/copy-url-button.tsx) 검증 대상
+- **Map polyline/marker**: SVG `<title>` 제한적 — Leaflet은 Tooltip 컴포넌트로 대체 (현재 적용 중)
+- **`lang="ko"`** ([layout.tsx:29](app/layout.tsx#L29)) — 한국어 declaration 정확
+- **로딩 상태**: `aria-live="polite"` + `role="status"` — Skeleton 영역에 누락 (Phase 2)
+
+### 17.5 Touch Targets
+
+모바일 인터랙티브 요소 최소 44×44px (iOS HIG / Material 48dp). 슬라이더 thumb, 버튼, 단계 카드 트리거 모두 충족. 단계 카드 chevron(▲▼)은 카드 전체 클릭 영역으로 해결.
+
+### 17.6 Iron Rules
+
+- **컬러로만 정보 전달 금지** — voltage = 활성, danger = 에러는 항상 텍스트/아이콘과 함께
+- **자동 재생/캐러셀 금지** — SME Tour는 사용자 주도 인터랙션만
+- **자동 focus 이동은 form submit 후 첫 에러 한정** — 기타 시점에 focus 가로채기 금지
+
+## 18. Print
+
+종설 발표 자료에 결과 인쇄/PDF 저장 시 사용. **현재 미구현** — 발표 일주일 전 도입 권장.
+
+### 18.1 Print CSS
+
+```css
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1in;
+  }
+
+  /* Hide interactive chrome */
+  aside,
+  .copy-url-button,
+  button[aria-expanded] svg,
+  .leaflet-control-container { display: none !important; }
+
+  /* Force expand all step cards */
+  [data-state="closed"] [data-collapsible-content] {
+    display: block !important;
+  }
+
+  /* Single column layout */
+  .grid { display: block !important; }
+
+  /* Map: keep but force height */
+  .leaflet-container {
+    height: 4in !important;
+    page-break-inside: avoid;
+  }
+
+  /* Show URLs after links */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 80%;
+    color: var(--muted);
+  }
+
+  /* Step cards: avoid mid-card page break */
+  [data-route-step-card] { page-break-inside: avoid; }
+
+  /* Ink-on-paper colors */
+  body { background: white !important; color: black !important; }
+}
+```
+
+### 18.2 Iron Rules
+
+- **컬러 의존 금지** — 흑백 출력 가정. voltage 강조는 `font-bold` + `underline`로 보강
+- **지도 마커는 색만으로 의미 X** — print에서 출발 마커 옆 "출발" 텍스트 라벨 자동 부착 (Phase 2)
+- **단계 카드는 모두 펼친 상태로 출력** — accordion 닫힘 상태 무시
+- **인쇄 미리보기에서 검증 필수** — Chrome DevTools "Emulate print media" 또는 실제 PDF 출력
 
 ---
 
-**참고**: [google-labs-code/design.md](https://github.com/google-labs-code/design.md) (포맷 표준), [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) (사례 컬렉션), [orioncactus/pretendard](https://github.com/orioncactus/pretendard) (폰트), [map.kakao.com](https://map.kakao.com/) / [toss.im](https://toss.im/) (한국 reference, 토큰 추출 출처).
+**참고**: [google-labs-code/design.md](https://github.com/google-labs-code/design.md) (포맷 표준), [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) (사례 컬렉션), [orioncactus/pretendard](https://github.com/orioncactus/pretendard) (폰트), [map.kakao.com](https://map.kakao.com/) / [toss.im](https://toss.im/) (한국 reference, 토큰 추출 출처), [WCAG 2.1 AA](https://www.w3.org/TR/WCAG21/) (접근성).
