@@ -60,14 +60,25 @@ app = FastAPI(
 )
 
 # ── CORS ─────────────────────────────────────────────────────
-_cors_origins = os.environ.get(
-    "CORS_ALLOWED_ORIGINS",
-    "https://sme-tour.json-server.win,https://*.vercel.app,http://localhost:3000",
-).split(",")
+# Starlette CORSMiddleware는 allow_origins에 glob 미지원 — vercel preview 처럼
+# 동적 sub-domain은 allow_origin_regex로 매치해야 함.
+_cors_origins = [
+    s
+    for s in os.environ.get(
+        "CORS_ALLOWED_ORIGINS",
+        "https://sme-tour.json-server.win,http://localhost:3000",
+    ).split(",")
+    if s
+]
+_cors_origin_regex = os.environ.get(
+    "CORS_ALLOWED_ORIGIN_REGEX",
+    r"https://sme-tour-.*\.vercel\.app",
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
+    allow_origin_regex=_cors_origin_regex,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["Content-Type"],
     allow_credentials=False,
