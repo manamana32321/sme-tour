@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, useQueryState } from "nuqs";
+import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, parseAsArrayOf, useQueryState } from "nuqs";
 import { OptimizeForm, type FocusField } from "@/components/form/optimize-form";
 import { SummaryCards } from "@/components/result/summary-cards";
 import { RouteList } from "@/components/result/route-list";
@@ -51,6 +51,15 @@ function PageInner() {
   const setStayDays = (next: Record<string, number>) => setStayDaysStr(serializeStayDays(next));
 
   const [requiredCountries, setRequiredCountries] = useState<string[] | null>(null);
+
+  const [requiredCitiesArr, setRequiredCitiesArr] = useQueryState(
+    "required_cities",
+    parseAsArrayOf(parseAsString).withDefault([])
+  );
+  const requiredCities: string[] | null =
+    requiredCitiesArr && requiredCitiesArr.length > 0 ? requiredCitiesArr : null;
+  const setRequiredCities = (v: string[] | null) =>
+    setRequiredCitiesArr(v && v.length > 0 ? v : []);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [focusField, setFocusField] = useState<FocusField>(null);
@@ -69,6 +78,7 @@ function PageInner() {
     start_hub: params.start_hub,
     w_cost: params.w_cost,
     required_countries: requiredCountries,
+    required_cities: requiredCities,
     stay_days: stayDaysPayload,
   });
 
@@ -85,6 +95,7 @@ function PageInner() {
           start_hub={params.start_hub}
           w_cost={params.w_cost}
           required_countries={requiredCountries}
+          required_cities={requiredCities}
           stay_days={stayDays}
           focusField={focusField}
           onBudgetChange={(v) => setParams({ budget_won: v })}
@@ -92,6 +103,7 @@ function PageInner() {
           onHubChange={(v) => setParams({ start_hub: v })}
           onWeightChange={(v) => setParams({ w_cost: v })}
           onCountriesChange={setRequiredCountries}
+          onCitiesChange={setRequiredCities}
           onStayDaysChange={setStayDays}
         />
       </aside>

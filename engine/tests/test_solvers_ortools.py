@@ -206,6 +206,60 @@ class TestOrToolsYVariable:
         assert solver._last_y_values["MIL_City"] == 1
 
 
+class TestOrToolsRequiredCities:
+    """required_cities 기능 invariants — OR-Tools 솔버."""
+
+    def test_required_cities_pinned_to_one(self, solver: OrToolsSolver, mini_graph) -> None:
+        """required_cities에 명시된 도시는 부모 허브와 무관하게 y_city == 1."""
+        # mini_graph: NCE_City→CDG, MIL_City→FCO
+        # CDG는 required_countries, FCO는 미필수, MIL_City는 required_cities로 명시
+        req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            required_cities=["MIL_City"],
+        )
+        result = solver.solve(mini_graph, req)
+        assert result.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert solver._last_y_values is not None
+        assert solver._last_y_values["CDG"] == 1
+        assert solver._last_y_values["NCE_City"] == 1  # CDG 자식 → 부모 강제
+        assert solver._last_y_values["MIL_City"] == 1  # 도시 명시 → 직접 강제
+        assert "MIL_City" in result.visited_cities
+
+    def test_required_cities_none_equivalent_to_baseline(self, solver: OrToolsSolver, mini_graph) -> None:
+        """required_cities=None이면 기존 동작과 동일한 결과."""
+        req_baseline = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+        )
+        result_baseline = solver.solve(mini_graph, req_baseline)
+        req_with_none = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            required_cities=None,
+        )
+        result_with_none = solver.solve(mini_graph, req_with_none)
+        assert result_baseline.objective_value == result_with_none.objective_value
+        assert result_baseline.total_cost_won == result_with_none.total_cost_won
+
+    def test_required_cities_empty_list_equivalent_to_none(self, solver: OrToolsSolver, mini_graph) -> None:
+        """required_cities=[]이면 None과 동일하게 동작."""
+        req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            required_cities=[],
+        )
+        result = solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        # mini fixture: required_countries=["CDG"]이면 CDG와 NCE_City만 강제
+        assert solver._last_y_values["CDG"] == 1
+        assert solver._last_y_values["NCE_City"] == 1
+
+
 class TestOrToolsStayDays:
     """stay_days 기능 invariants — OR-Tools 솔버."""
 

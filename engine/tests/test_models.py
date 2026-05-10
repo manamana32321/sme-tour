@@ -124,6 +124,26 @@ class TestOptimizeRequestStayDays:
         assert req.stay_days == {}
 
 
+class TestOptimizeRequestRequiredCities:
+    def test_default_none(self):
+        req = OptimizeRequest(budget_won=10_000_000, deadline_days=14, start_hub="CDG")
+        assert req.required_cities is None
+
+    def test_valid_list(self):
+        req = OptimizeRequest(
+            budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+            required_cities=["NCE_City", "MIL_City"],
+        )
+        assert req.required_cities == ["NCE_City", "MIL_City"]
+
+    def test_empty_list_allowed(self):
+        req = OptimizeRequest(
+            budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+            required_cities=[],
+        )
+        assert req.required_cities == []
+
+
 class TestRouteEdge:
     def test_valid_edge(self) -> None:
         edge = RouteEdge(
