@@ -122,6 +122,57 @@ class TestGurobiYVariable:
         assert solver._last_y_values["MIL_City"] == 1
 
 
+class TestGurobiRequiredCities:
+    """required_cities 기능 invariants — Gurobi 솔버 (OR-Tools 미러)."""
+
+    def test_required_cities_pinned_to_one(self, solver, mini_graph) -> None:
+        """required_cities에 명시된 도시는 부모 허브와 무관하게 y_city == 1."""
+        req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            required_cities=["MIL_City"],
+        )
+        result = solver.solve(mini_graph, req)
+        assert result.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert solver._last_y_values is not None
+        assert solver._last_y_values["CDG"] == 1
+        assert solver._last_y_values["NCE_City"] == 1
+        assert solver._last_y_values["MIL_City"] == 1
+        assert "MIL_City" in result.visited_cities
+
+    def test_required_cities_none_equivalent_to_baseline(self, solver, mini_graph) -> None:
+        """required_cities=None이면 기존 동작과 동일한 결과."""
+        req_baseline = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+        )
+        result_baseline = solver.solve(mini_graph, req_baseline)
+        req_with_none = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            required_cities=None,
+        )
+        result_with_none = solver.solve(mini_graph, req_with_none)
+        assert result_baseline.objective_value == result_with_none.objective_value
+        assert result_baseline.total_cost_won == result_with_none.total_cost_won
+
+    def test_required_cities_empty_list_equivalent_to_none(self, solver, mini_graph) -> None:
+        """required_cities=[]이면 None과 동일하게 동작."""
+        req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            required_cities=[],
+        )
+        result = solver.solve(mini_graph, req)
+        assert solver._last_y_values is not None
+        assert solver._last_y_values["CDG"] == 1
+        assert solver._last_y_values["NCE_City"] == 1
+
+
 class TestGurobiStayDays:
     """stay_days 기능 invariants — Gurobi 솔버 (OR-Tools 미러)."""
 
