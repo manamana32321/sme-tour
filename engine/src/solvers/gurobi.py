@@ -284,6 +284,14 @@ class GurobiSolver(BaseSolver):
             **{h: int(round(y_hub[h].X)) for h in graph.hubs},
         }
 
+        # 체류시간 추가 (deadline 제약과 의미 일치)
+        stay_days_map = req.stay_days or {}
+        total_time += sum(
+            stay_days_map.get(d, 0) * 1440
+            for d, y in self._last_y_values.items()
+            if y == 1
+        )
+
         return OptimizeResult(
             status=status,
             route=route,

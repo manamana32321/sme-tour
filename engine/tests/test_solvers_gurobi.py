@@ -174,3 +174,28 @@ class TestGurobiStayDays:
         assert result.status in (Status.OPTIMAL, Status.FEASIBLE, Status.INFEASIBLE)
         if result.status != Status.INFEASIBLE:
             assert "AMS" not in result.visited_iata
+
+    def test_stay_days_added_to_response_total_time(self, solver, mini_graph) -> None:
+        """stay_days가 response total_time_minutes에도 반영되어야 (deadline 의미와 일치)."""
+        req_baseline = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+        )
+        result_baseline = solver.solve(mini_graph, req_baseline)
+        baseline_time = result_baseline.total_time_minutes
+
+        req_with_stay = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            stay_days={"CDG": 2, "FCO": 1},
+        )
+        result_with_stay = solver.solve(mini_graph, req_with_stay)
+
+        # 같은 route를 찾았다면 (예산/시간 여유) total_time이 stay 만큼 더 커야 함
+        # CDG, FCO 모두 visited이면 +3 days = +4320 min
+        if "CDG" in result_with_stay.visited_iata and "FCO" in result_with_stay.visited_iata:
+            expected_extra = 3 * 1440
+            assert result_with_stay.total_time_minutes == baseline_time + expected_extra, (
+                f"baseline={baseline_time}, with_stay={result_with_stay.total_time_minutes}, "
+                f"expected delta={expected_extra}"
+            )

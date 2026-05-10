@@ -256,6 +256,14 @@ class OrToolsSolver(BaseSolver):
             **{h: int(solver.value(y_hub[h])) for h in graph.hubs},
         }
 
+        # 체류시간 추가 (deadline 제약과 의미 일치)
+        stay_days = req.stay_days or {}
+        total_time += sum(
+            stay_days.get(d, 0) * 1440
+            for d, y in self._last_y_values.items()
+            if y == 1
+        )
+
         return OptimizeResult(
             status=status,
             route=route,
