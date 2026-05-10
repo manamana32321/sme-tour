@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString } from "nuqs";
+import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, useQueryState } from "nuqs";
 import { OptimizeForm, type FocusField } from "@/components/form/optimize-form";
 import { SummaryCards } from "@/components/result/summary-cards";
 import { RouteList } from "@/components/result/route-list";
@@ -20,6 +20,24 @@ const RouteMap = dynamic(
 
 const FOCUS_PULSE_MS = 2500;
 
+function parseStayDaysString(s: string): Record<string, number> {
+  if (!s) return {};
+  const result: Record<string, number> = {};
+  for (const part of s.split(",")) {
+    const [k, v] = part.split(":");
+    const days = parseInt(v, 10);
+    if (k && !isNaN(days)) result[k] = days;
+  }
+  return result;
+}
+
+function serializeStayDays(v: Record<string, number>): string {
+  return Object.entries(v)
+    .filter(([, d]) => d > 0)
+    .map(([k, d]) => `${k}:${d}`)
+    .join(",");
+}
+
 function PageInner() {
   const [params, setParams] = useQueryStates({
     budget_won: parseAsInteger.withDefault(10_000_000),
@@ -27,6 +45,10 @@ function PageInner() {
     start_hub: parseAsString.withDefault("CDG"),
     w_cost: parseAsFloat.withDefault(0.5),
   });
+
+  const [stayDaysStr, setStayDaysStr] = useQueryState("stay_days", parseAsString.withDefault(""));
+  const stayDays = parseStayDaysString(stayDaysStr);
+  const setStayDays = (next: Record<string, number>) => setStayDaysStr(serializeStayDays(next));
 
   const [requiredCountries, setRequiredCountries] = useState<string[] | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -39,12 +61,15 @@ function PageInner() {
     return () => clearTimeout(t);
   }, [focusField]);
 
+  const stayDaysPayload = Object.keys(stayDays).length > 0 ? stayDays : null;
+
   const { result, loading, error } = useOptimize({
     budget_won: params.budget_won,
     deadline_days: params.deadline_days,
     start_hub: params.start_hub,
     w_cost: params.w_cost,
     required_countries: requiredCountries,
+    stay_days: stayDaysPayload,
   });
 
   return (
@@ -60,12 +85,14 @@ function PageInner() {
           start_hub={params.start_hub}
           w_cost={params.w_cost}
           required_countries={requiredCountries}
+          stay_days={stayDays}
           focusField={focusField}
           onBudgetChange={(v) => setParams({ budget_won: v })}
           onDeadlineChange={(v) => setParams({ deadline_days: v })}
           onHubChange={(v) => setParams({ start_hub: v })}
           onWeightChange={(v) => setParams({ w_cost: v })}
           onCountriesChange={setRequiredCountries}
+          onStayDaysChange={setStayDays}
         />
       </aside>
 
