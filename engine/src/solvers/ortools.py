@@ -128,13 +128,18 @@ class OrToolsSolver(BaseSolver):
                 model.add(sum(x[i] for i in in_idx) == y_city[n])
 
         # ── 필수 방문 핀 ─────────────────────────────────────
-        # required_countries 안의 허브 자체와 그 자식 내륙 도시 모두 강제 방문
+        # required_countries 안의 허브 + 그 자식 내륙 도시 강제 방문
+        # required_cities에 명시된 내륙 도시도 강제 방문 (OR)
+        required_cities = set(req.required_cities) if req.required_cities else set()
+
         for h in required:
             if h in graph.hubs:  # 안전 가드 (잘못된 IATA 대비)
                 model.add(y_hub[h] == 1)
         for c in graph.internal_cities:
-            hub = graph.city_to_hub.get(c)
-            if hub and hub in required:
+            parent_hub = graph.city_to_hub.get(c)
+            country_required = parent_hub and parent_hub in required
+            city_required = c in required_cities
+            if country_required or city_required:
                 model.add(y_city[c] == 1)
 
         # 출발지
