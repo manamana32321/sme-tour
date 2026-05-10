@@ -62,6 +62,14 @@ class OptimizeRequest(BaseModel):
         None,
         description="방문 필수 국가 IATA 코드 리스트. None이면 전체 15개국 필수 방문.",
     )
+    required_cities: list[str] | None = Field(
+        None,
+        description=(
+            "방문 필수 내륙 도시 노드명 리스트 (예: 'NCE_City'). "
+            "None이면 도시 단위 강제 없음 (parent 허브가 required_countries에 있으면 여전히 강제). "
+            "중복 effect는 OR — 어느 한쪽이라도 포함되면 y[d]=1."
+        ),
+    )
     stay_days: dict[str, int] | None = Field(
         None,
         description=(
