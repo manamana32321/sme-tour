@@ -8,6 +8,7 @@ import { BudgetSlider } from "./budget-slider";
 import { DeadlineSlider } from "./deadline-slider";
 import { WeightSlider } from "./weight-slider";
 import { CountrySelect } from "./country-select";
+import { CitySelect } from "./city-select";
 import { StayDaysInput } from "./stay-days-input";
 
 export type FocusField = "budget" | "deadline" | "countries" | null;
@@ -18,6 +19,7 @@ interface OptimizeFormProps {
   start_hub: string;
   w_cost: number;
   required_countries: string[] | null;
+  required_cities: string[] | null;
   stay_days: Record<string, number>;
   focusField: FocusField;
   onBudgetChange: (v: number) => void;
@@ -25,6 +27,7 @@ interface OptimizeFormProps {
   onHubChange: (v: string) => void;
   onWeightChange: (v: number) => void;
   onCountriesChange: (v: string[] | null) => void;
+  onCitiesChange: (v: string[] | null) => void;
   onStayDaysChange: (v: Record<string, number>) => void;
 }
 
@@ -62,6 +65,7 @@ export function OptimizeForm(props: OptimizeFormProps) {
         <FocusableField fieldRef={countriesRef} active={props.focusField === "countries"}>
           <CountrySelect value={props.required_countries} onApply={props.onCountriesChange} />
         </FocusableField>
+        <CitySelect value={props.required_cities} onApply={props.onCitiesChange} />
         <StayDaysInput
           selectedCountries={props.required_countries}
           stayDays={props.stay_days}
