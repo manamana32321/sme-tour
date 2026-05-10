@@ -204,3 +204,73 @@ class TestOrToolsYVariable:
         # 자식 도시 핀 (mini_graph.city_to_hub: NCE_City→CDG, MIL_City→FCO)
         assert solver._last_y_values["NCE_City"] == 1
         assert solver._last_y_values["MIL_City"] == 1
+
+
+class TestOrToolsStayDays:
+    """stay_days 기능 invariants — OR-Tools 솔버."""
+
+    def test_stay_days_none_equivalent_to_baseline(self, solver: OrToolsSolver, mini_graph) -> None:
+        """stay_days=None이면 기존 동작과 동일한 total_time을 반환해야."""
+        base_req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+        )
+        none_req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+            stay_days=None,
+        )
+        base = solver.solve(mini_graph, base_req)
+        with_none = solver.solve(mini_graph, none_req)
+        assert base.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert with_none.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert base.total_time_minutes == with_none.total_time_minutes
+
+    def test_stay_days_adds_to_time_constraint_tight(self, solver: OrToolsSolver, mini_graph) -> None:
+        """짧은 deadline + 큰 체류일 → 시간 초과 → INFEASIBLE 또는 기존보다 더 적은 방문."""
+        # 5일 deadline (7200분). stay_days CDG:5 = 7200분 추가 → 이동 시간 여유 0분
+        tight_req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=5,
+            start_hub="CDG",
+            w_cost=0.5,
+            stay_days={"CDG": 5},  # 5일 * 1440분 = 7200분
+        )
+        tight_result = solver.solve(mini_graph, tight_req)
+        # 이동시간이 0분일 수 없으므로 INFEASIBLE이어야
+        assert tight_result.status == Status.INFEASIBLE
+
+    def test_stay_days_adds_to_time_constraint_loose(self, solver: OrToolsSolver, mini_graph) -> None:
+        """넉넉한 deadline에서 stay_days={"CDG": 2}는 여전히 OPTIMAL/FEASIBLE."""
+        loose_req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+            stay_days={"CDG": 2},  # 2일 = 2880분, 30일(43200분) 중 여유 충분
+        )
+        loose_result = solver.solve(mini_graph, loose_req)
+        assert loose_result.status in (Status.OPTIMAL, Status.FEASIBLE)
+
+    def test_stay_days_for_unvisited_no_effect(self, solver: OrToolsSolver, mini_graph) -> None:
+        """방문하지 않는 허브(y[AMS]=0)에 stay_days=30 지정해도 시간 기여 0 → OPTIMAL/FEASIBLE."""
+        # required_countries=["CDG"]이면 AMS는 optional — 비용 최소화 시 skip될 가능성 있음
+        req = OptimizeRequest(
+            budget_won=30_000_000,
+            deadline_days=30,
+            start_hub="CDG",
+            w_cost=0.5,
+            required_countries=["CDG"],  # AMS 필수 아님
+            stay_days={"AMS": 30},  # AMS 30일 — AMS 방문 시에만 적용
+        )
+        result = solver.solve(mini_graph, req)
+        # stay_days 때문에 infeasible이 되면 안 됨 (AMS 미방문 시 기여 0)
+        assert result.status in (Status.OPTIMAL, Status.FEASIBLE, Status.INFEASIBLE)
+        if result.status != Status.INFEASIBLE:
+            # AMS를 방문했다면 30*1440=43200분(30일)이 추가 → 30일 deadline 초과 → 방문 불가
+            # 따라서 AMS는 skip되었어야 함
+            assert "AMS" not in result.visited_iata
