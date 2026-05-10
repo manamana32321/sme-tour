@@ -14,6 +14,7 @@ export const OptimizeRequestSchema = z.object({
   }),
   w_cost: z.number().min(0).max(1).default(0.5),
   required_countries: z.array(z.string()).nullable().default(null),
+  stay_days: z.record(z.string(), z.number().int().min(0).max(30)).nullable().default(null),
 });
 export type OptimizeRequest = z.infer<typeof OptimizeRequestSchema>;
 

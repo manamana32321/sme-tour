@@ -76,6 +76,54 @@ class TestOptimizeRequest:
             OptimizeRequest(budget_won=5_000_000)  # type: ignore[call-arg]
 
 
+class TestOptimizeRequestStayDays:
+    def test_stay_days_none_default(self) -> None:
+        req = OptimizeRequest(budget_won=10_000_000, deadline_days=14, start_hub="CDG")
+        assert req.stay_days is None
+
+    def test_stay_days_valid_dict(self) -> None:
+        req = OptimizeRequest(
+            budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+            stay_days={"CDG": 2, "FCO": 1},
+        )
+        assert req.stay_days == {"CDG": 2, "FCO": 1}
+
+    def test_stay_days_zero_allowed(self) -> None:
+        req = OptimizeRequest(
+            budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+            stay_days={"CDG": 0},
+        )
+        assert req.stay_days == {"CDG": 0}
+
+    def test_stay_days_max_allowed(self) -> None:
+        req = OptimizeRequest(
+            budget_won=10_000_000, deadline_days=30, start_hub="CDG",
+            stay_days={"CDG": 30},
+        )
+        assert req.stay_days == {"CDG": 30}
+
+    def test_stay_days_negative_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            OptimizeRequest(
+                budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+                stay_days={"CDG": -1},
+            )
+
+    def test_stay_days_too_large_rejected(self) -> None:
+        with pytest.raises(ValueError):
+            OptimizeRequest(
+                budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+                stay_days={"CDG": 31},
+            )
+
+    def test_stay_days_empty_dict_allowed(self) -> None:
+        req = OptimizeRequest(
+            budget_won=10_000_000, deadline_days=14, start_hub="CDG",
+            stay_days={},
+        )
+        assert req.stay_days == {}
+
+
 class TestRouteEdge:
     def test_valid_edge(self) -> None:
         edge = RouteEdge(

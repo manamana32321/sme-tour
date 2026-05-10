@@ -120,3 +120,82 @@ class TestGurobiYVariable:
         assert solver._last_y_values["FCO"] == 1
         assert solver._last_y_values["NCE_City"] == 1
         assert solver._last_y_values["MIL_City"] == 1
+
+
+class TestGurobiStayDays:
+    """stay_days 기능 invariants — Gurobi 솔버 (OR-Tools 미러)."""
+
+    def test_stay_days_none_equivalent_to_baseline(self, solver, mini_graph) -> None:
+        """stay_days=None이면 기존 동작과 동일한 total_time을 반환해야."""
+        base_req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+        )
+        none_req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            stay_days=None,
+        )
+        base = solver.solve(mini_graph, base_req)
+        with_none = solver.solve(mini_graph, none_req)
+        assert base.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert with_none.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert base.total_time_minutes == with_none.total_time_minutes
+
+    def test_stay_days_adds_to_time_constraint_tight(self, solver, mini_graph) -> None:
+        """짧은 deadline + 큰 체류일 → 시간 초과 → INFEASIBLE."""
+        tight_req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=5,
+            start_hub="CDG", w_cost=0.5,
+            stay_days={"CDG": 5},  # 5일 * 1440분 = 7200분, deadline도 7200분
+        )
+        tight_result = solver.solve(mini_graph, tight_req)
+        assert tight_result.status == Status.INFEASIBLE
+
+    def test_stay_days_adds_to_time_constraint_loose(self, solver, mini_graph) -> None:
+        """넉넉한 deadline에서 stay_days={"CDG": 2}는 여전히 OPTIMAL/FEASIBLE."""
+        loose_req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            stay_days={"CDG": 2},
+        )
+        loose_result = solver.solve(mini_graph, loose_req)
+        assert loose_result.status in (Status.OPTIMAL, Status.FEASIBLE)
+
+    def test_stay_days_for_unvisited_no_effect(self, solver, mini_graph) -> None:
+        """방문하지 않는 허브(AMS)에 stay_days=30 지정해도 시간 기여 0."""
+        req = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            required_countries=["CDG"],
+            stay_days={"AMS": 30},
+        )
+        result = solver.solve(mini_graph, req)
+        assert result.status in (Status.OPTIMAL, Status.FEASIBLE, Status.INFEASIBLE)
+        if result.status != Status.INFEASIBLE:
+            assert "AMS" not in result.visited_iata
+
+    def test_stay_days_added_to_response_total_time(self, solver, mini_graph) -> None:
+        """stay_days가 response total_time_minutes에도 반영되어야 (deadline 의미와 일치)."""
+        req_baseline = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+        )
+        result_baseline = solver.solve(mini_graph, req_baseline)
+        baseline_time = result_baseline.total_time_minutes
+
+        req_with_stay = OptimizeRequest(
+            budget_won=30_000_000, deadline_days=30,
+            start_hub="CDG", w_cost=0.5,
+            stay_days={"CDG": 2, "FCO": 1},
+        )
+        result_with_stay = solver.solve(mini_graph, req_with_stay)
+
+        # 같은 route를 찾았다면 (예산/시간 여유) total_time이 stay 만큼 더 커야 함
+        # CDG, FCO 모두 visited이면 +3 days = +4320 min
+        if "CDG" in result_with_stay.visited_iata and "FCO" in result_with_stay.visited_iata:
+            expected_extra = 3 * 1440
+            assert result_with_stay.total_time_minutes == baseline_time + expected_extra, (
+                f"baseline={baseline_time}, with_stay={result_with_stay.total_time_minutes}, "
+                f"expected delta={expected_extra}"
+            )

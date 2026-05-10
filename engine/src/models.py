@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import Enum
 from typing import Literal
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 
 class Status(str, Enum):
@@ -62,6 +62,26 @@ class OptimizeRequest(BaseModel):
         None,
         description="방문 필수 국가 IATA 코드 리스트. None이면 전체 15개국 필수 방문.",
     )
+    stay_days: dict[str, int] | None = Field(
+        None,
+        description=(
+            "도시별 체류일 (key: 허브 IATA 또는 내륙 도시 노드명, value: 0~30일). "
+            "None이면 체류시간 미반영 (이동시간만 시간 제약 검사). "
+            "지정한 도시가 실제 방문되지 않으면(y[d]=0) 시간 기여 0."
+        ),
+    )
+
+    @field_validator("stay_days")
+    @classmethod
+    def validate_stay_days(cls, v: dict[str, int] | None) -> dict[str, int] | None:
+        if v is None:
+            return None
+        for key, days in v.items():
+            if not isinstance(days, int) or days < 0 or days > 30:
+                raise ValueError(
+                    f"stay_days[{key!r}] = {days} (0~30 사이 정수여야 함)"
+                )
+        return v
 
     @computed_field  # type: ignore[prop-decorator]
     @property

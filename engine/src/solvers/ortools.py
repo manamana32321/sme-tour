@@ -67,8 +67,6 @@ class OrToolsSolver(BaseSolver):
             sum(int(edge_cost[i] * _OBJ_SCALE) * x[i] for i in range(n_edges))
             <= int(budget_scaled * _OBJ_SCALE)
         )
-        # 시간 제약
-        model.add(sum(edge_time[i] * x[i] for i in range(n_edges)) <= deadline)
 
         # 필수 방문 국가 결정
         required = set(req.required_countries) if req.required_countries else graph.hubs
@@ -85,6 +83,20 @@ class OrToolsSolver(BaseSolver):
             h: model.new_bool_var(f"y_hub_{h}")
             for h in graph.hubs
         }
+
+        # 시간 제약 (이동시간 + 체류시간)
+        # stay_days[d] * 1440 (분/일) * y[d] (방문 여부)를 합산
+        stay_days = req.stay_days or {}
+        all_y = {**y_city, **y_hub}
+        stay_terms = [
+            stay_days.get(d, 0) * 1440 * all_y[d]
+            for d in (graph.internal_cities | graph.hubs)
+        ]
+        model.add(
+            sum(edge_time[i] * x[i] for i in range(n_edges))
+            + sum(stay_terms)
+            <= deadline
+        )
 
         # 허브 가상 노드 집합 (substring 매치보다 안전)
         hub_virtual_nodes = {f"{h}_Entry" for h in graph.hubs} | {f"{h}_Exit" for h in graph.hubs}
@@ -243,6 +255,14 @@ class OrToolsSolver(BaseSolver):
             **{c: int(solver.value(y_city[c])) for c in graph.internal_cities},
             **{h: int(solver.value(y_hub[h])) for h in graph.hubs},
         }
+
+        # 체류시간 추가 (deadline 제약과 의미 일치)
+        stay_days = req.stay_days or {}
+        total_time += sum(
+            stay_days.get(d, 0) * 1440
+            for d, y in self._last_y_values.items()
+            if y == 1
+        )
 
         return OptimizeResult(
             status=status,
