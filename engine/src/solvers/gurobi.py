@@ -129,9 +129,22 @@ class GurobiSolver(BaseSolver):
                 )
             m.addConstr(gp.quicksum(x[e] for e in entry_out_edges) == y_hub[h])
 
-        # ── 예산/시간 제약 ───────────────────────────────────
+        # ── 예산 제약 ────────────────────────────────────────
         m.addConstr(gp.quicksum(edge_dict[e]["cost"] * x[e] for e in edge_dict) <= budget_scaled)
-        m.addConstr(gp.quicksum(edge_dict[e]["time"] * x[e] for e in edge_dict) <= deadline)
+
+        # 시간 제약 (이동시간 + 체류시간)
+        # stay_days[d] * 1440 (분/일) * y[d] (방문 여부)를 합산
+        stay_days = req.stay_days or {}
+        m.addConstr(
+            gp.quicksum(edge_dict[e]["time"] * x[e] for e in edge_dict)
+            + gp.quicksum(
+                stay_days.get(d, 0) * 1440 * y_city[d] for d in graph.internal_cities
+            )
+            + gp.quicksum(
+                stay_days.get(h, 0) * 1440 * y_hub[h] for h in graph.hubs
+            )
+            <= deadline
+        )
 
         # ── 목적 함수 ───────────────────────────────────────
         m.setObjective(
