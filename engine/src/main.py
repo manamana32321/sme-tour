@@ -9,8 +9,8 @@ from __future__ import annotations
 import logging
 import os
 import time as time_mod
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -19,7 +19,7 @@ from fastapi.responses import JSONResponse
 
 from .data_loader import load_default_graph
 from .graph import Graph
-from .models import OptimizeRequest, OptimizeResult, Status
+from .models import OptimizeRequest, OptimizeResult
 from .solvers import BaseSolver, get_solver
 from .solvers.base import SolverInitializationError
 
@@ -33,7 +33,7 @@ _solver: BaseSolver | None = None
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """앱 시작/종료 이벤트."""
-    global _graph, _solver  # noqa: PLW0603
+    global _graph, _solver
 
     logger.info("Loading graph from CSV...")
     _graph = load_default_graph()

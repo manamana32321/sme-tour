@@ -21,8 +21,10 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      # ".[gurobi,dev]" — gurobipy(계약/Gurobi 테스트) + pytest 포함
+      # ".[gurobi,dev]" — gurobipy(계약/Gurobi 테스트) + pytest/ruff 포함
       - run: pip install --upgrade pip && pip install ".[gurobi,dev]"
+
+      - run: ruff check src tests
 
       # WLS 시크릿이 주입되면 Gurobi + 계약 테스트가 실제로 실행된다.
       # 미주입 시 해당 테스트는 skip (test_solvers_gurobi/contract의 가드).

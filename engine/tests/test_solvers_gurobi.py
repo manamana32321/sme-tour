@@ -167,7 +167,7 @@ class TestGurobiRequiredCities:
             required_countries=["CDG"],
             required_cities=[],
         )
-        result = solver.solve(mini_graph, req)
+        solver.solve(mini_graph, req)
         assert solver._last_y_values is not None
         assert solver._last_y_values["CDG"] == 1
         assert solver._last_y_values["NCE_City"] == 1

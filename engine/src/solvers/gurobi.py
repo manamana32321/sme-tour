@@ -251,8 +251,8 @@ class GurobiSolver(BaseSolver):
 
         # ── y[d] 결정변수 노출 ───────────────────────────────
         self._last_y_values = {
-            **{c: int(round(y_city[c].X)) for c in graph.internal_cities},
-            **{h: int(round(y_hub[h].X)) for h in graph.hubs},
+            **{c: round(y_city[c].X) for c in graph.internal_cities},
+            **{h: round(y_hub[h].X) for h in graph.hubs},
         }
 
         # 체류시간 추가 (deadline 제약과 의미 일치)
