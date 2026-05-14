@@ -58,7 +58,7 @@ class GurobiSolver(BaseSolver):
         self._last_y_values: dict[str, int] | None = None
         try:
             self._env = gp.Env(empty=True)
-            self._env.setParam("LicenseID", os.environ["GUROBI_LICENSE_ID"])
+            self._env.setParam("LicenseID", int(os.environ["GUROBI_LICENSE_ID"]))
             self._env.setParam("WLSAccessID", os.environ["GUROBI_WLS_ACCESS_ID"])
             self._env.setParam("WLSSecret", os.environ["GUROBI_WLS_SECRET"])
             self._env.start()
@@ -66,6 +66,10 @@ class GurobiSolver(BaseSolver):
             raise SolverInitializationError(
                 f"Gurobi WLS 환경변수 누락: {e}. "
                 "GUROBI_LICENSE_ID, GUROBI_WLS_ACCESS_ID, GUROBI_WLS_SECRET 세 개가 모두 필요합니다."
+            ) from e
+        except ValueError as e:
+            raise SolverInitializationError(
+                f"GUROBI_LICENSE_ID는 정수여야 합니다: {e}."
             ) from e
         except gp.GurobiError as e:
             raise SolverInitializationError(
