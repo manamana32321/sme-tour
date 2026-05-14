@@ -6,13 +6,13 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field, computed_field, field_validator
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     """솔버가 반환하는 해의 상태."""
 
     OPTIMAL = "optimal"

@@ -7,6 +7,7 @@ mini fixtures (3 hubs + 2 internal cities)로 노드/에지 생성 로직을
 
 from __future__ import annotations
 
+from dataclasses import FrozenInstanceError
 from pathlib import Path
 
 import pytest
@@ -40,7 +41,7 @@ class TestHubsAndCities:
         assert "MIL_City" in mini_graph.virtual_nodes
 
     def test_virtual_nodes_total_count(self, mini_graph: Graph) -> None:
-        # 3 hubs × 2 (Entry/Exit) + 2 internal cities = 8
+        # 3 hubs * 2 (Entry/Exit) + 2 internal cities = 8
         assert len(mini_graph.virtual_nodes) == 8
 
 
@@ -134,5 +135,5 @@ class TestCategorize:
 
     def test_edge_is_immutable(self) -> None:
         e = Edge(u="A", v="B", mode="Air_X", category="air", cost_scaled=1.0, time_minutes=60)
-        with pytest.raises(Exception):  # frozen dataclass → FrozenInstanceError
+        with pytest.raises(FrozenInstanceError):  # frozen dataclass
             e.cost_scaled = 2.0  # type: ignore[misc]

@@ -13,7 +13,6 @@ import pytest
 from src.graph import Graph
 from src.models import OptimizeRequest, OptimizeResult, Status
 from src.solvers import BaseSolver, get_solver
-from src.solvers.base import SolverInitializationError
 
 
 class TestBaseSolverContract:

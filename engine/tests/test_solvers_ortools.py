@@ -253,7 +253,7 @@ class TestOrToolsRequiredCities:
             required_countries=["CDG"],
             required_cities=[],
         )
-        result = solver.solve(mini_graph, req)
+        solver.solve(mini_graph, req)
         assert solver._last_y_values is not None
         # mini fixture: required_countries=["CDG"]이면 CDG와 NCE_City만 강제
         assert solver._last_y_values["CDG"] == 1
