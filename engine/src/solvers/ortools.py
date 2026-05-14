@@ -21,7 +21,8 @@ import networkx as nx
 from ortools.sat.python import cp_model
 
 from ..graph import Graph
-from ..models import OptimizeRequest, OptimizeResult, RouteEdge, Status
+from ..models import OptimizeRequest, OptimizeResult, Status
+from ._shared import ActiveEdge, reconstruct_route, stay_time_minutes
 from .base import BaseSolver
 
 logger = logging.getLogger(__name__)
@@ -212,48 +213,16 @@ class OrToolsSolver(BaseSolver):
             return self._empty_result(Status.TIMEOUT, solve_ms)
 
         # ── 경로 재구성 ─────────────────────────────────────
-        active_edges: dict[str, tuple[str, str, str, float, int]] = {}
+        # active(x=1) 에지를 from_node 키 dict로 모아 공유 헬퍼에 위임.
+        active_edges: dict[str, ActiveEdge] = {}
         for i in range(n_edges):
             if solver.value(x[i]) == 1:
                 eu, ev, mode = edge_keys[i]
                 active_edges[eu] = (eu, ev, mode, edge_cost[i], edge_time[i])
 
-        route: list[RouteEdge] = []
-        visited_iata: set[str] = set()
-        visited_cities: list[str] = []
-        total_cost = 0
-        total_time = 0
-
-        curr = start_node
-        for _ in range(len(active_edges) + 1):
-            if curr not in active_edges:
-                break
-            eu, ev, mode, cost_s, time_m = active_edges[curr]
-            cost_won = int(cost_s * graph.scale_factor)
-
-            if mode == "Hub_Stay":
-                category = "hub_stay"
-            elif mode.startswith("Air_"):
-                category = "air"
-            else:
-                category = "ground"
-
-            route.append(RouteEdge(
-                from_node=eu, to_node=ev, mode=mode,
-                category=category, cost_won=cost_won, time_minutes=time_m,
-            ))
-            total_cost += cost_won
-            total_time += time_m
-
-            for node in (eu, ev):
-                if node.endswith("_Entry") or node.endswith("_Exit"):
-                    visited_iata.add(node.rsplit("_", 1)[0])
-                elif node not in visited_cities:
-                    visited_cities.append(node)
-
-            curr = ev
-            if curr == start_node:
-                break
+        route, visited_iata, visited_cities, total_cost, total_time = reconstruct_route(
+            start_node, active_edges, graph
+        )
 
         # ── y[d] 결정변수 노출 ───────────────────────────────
         self._last_y_values = {
@@ -262,12 +231,7 @@ class OrToolsSolver(BaseSolver):
         }
 
         # 체류시간 추가 (deadline 제약과 의미 일치)
-        stay_days = req.stay_days or {}
-        total_time += sum(
-            stay_days.get(d, 0) * 1440
-            for d, y in self._last_y_values.items()
-            if y == 1
-        )
+        total_time += stay_time_minutes(self._last_y_values, req.stay_days)
 
         return OptimizeResult(
             status=status,
@@ -277,7 +241,7 @@ class OrToolsSolver(BaseSolver):
             objective_value=float(solver.objective_value) / _OBJ_SCALE,
             solve_time_ms=solve_ms,
             solver="ortools",
-            visited_iata=sorted(visited_iata),
+            visited_iata=visited_iata,
             visited_cities=visited_cities,
             engine_version=self._version(),
         )

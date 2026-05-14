@@ -27,7 +27,8 @@ from typing import TYPE_CHECKING
 import networkx as nx
 
 from ..graph import Graph
-from ..models import OptimizeRequest, OptimizeResult, RouteEdge, Status
+from ..models import OptimizeRequest, OptimizeResult, Status
+from ._shared import ActiveEdge, reconstruct_route, stay_time_minutes
 from .base import BaseSolver, SolverInitializationError
 
 if TYPE_CHECKING:
@@ -235,57 +236,18 @@ class GurobiSolver(BaseSolver):
         else:
             return self._empty_result(Status.INFEASIBLE, solve_ms)
 
-        # ── 경로 재구성 (start_node부터 체인 순회) ──────────
-        route: list[RouteEdge] = []
-        visited_iata: set[str] = set()
-        visited_cities: list[str] = []
-        total_cost = 0
-        total_time = 0
+        # ── 경로 재구성 ─────────────────────────────────────
+        # active(x=1) 에지를 from_node 키 dict로 모아 공유 헬퍼에 위임.
+        active_edges: dict[str, ActiveEdge] = {}
+        for key in edge_dict:
+            if x[key].X > 0.5:
+                u, v, mode = key
+                data = edge_dict[key]
+                active_edges[u] = (u, v, mode, data["cost"], int(data["time"]))
 
-        curr = start_node
-        for _ in range(len(edge_dict)):
-            found = False
-            for key in edge_dict:
-                i, j, mode = key
-                if i == curr and x[key].X > 0.5:
-                    data = edge_dict[key]
-                    cost_won = int(data["cost"] * graph.scale_factor)
-                    time_min = int(data["time"])
-
-                    if mode == "Hub_Stay":
-                        category = "hub_stay"
-                    elif mode.startswith("Air_"):
-                        category = "air"
-                    else:
-                        category = "ground"
-
-                    route.append(
-                        RouteEdge(
-                            from_node=i,
-                            to_node=j,
-                            mode=mode,
-                            category=category,
-                            cost_won=cost_won,
-                            time_minutes=time_min,
-                        )
-                    )
-
-                    total_cost += cost_won
-                    total_time += time_min
-
-                    # IATA / city 추적
-                    for node in (i, j):
-                        if node.endswith("_Entry") or node.endswith("_Exit"):
-                            visited_iata.add(node.rsplit("_", 1)[0])
-                        elif node not in visited_cities:
-                            visited_cities.append(node)
-
-                    curr = j
-                    found = True
-                    break
-
-            if not found or curr == start_node:
-                break
+        route, visited_iata, visited_cities, total_cost, total_time = reconstruct_route(
+            start_node, active_edges, graph
+        )
 
         # ── y[d] 결정변수 노출 ───────────────────────────────
         self._last_y_values = {
@@ -294,12 +256,7 @@ class GurobiSolver(BaseSolver):
         }
 
         # 체류시간 추가 (deadline 제약과 의미 일치)
-        stay_days_map = req.stay_days or {}
-        total_time += sum(
-            stay_days_map.get(d, 0) * 1440
-            for d, y in self._last_y_values.items()
-            if y == 1
-        )
+        total_time += stay_time_minutes(self._last_y_values, req.stay_days)
 
         return OptimizeResult(
             status=status,
@@ -309,7 +266,7 @@ class GurobiSolver(BaseSolver):
             objective_value=float(m.ObjVal),
             solve_time_ms=solve_ms,
             solver="gurobi",
-            visited_iata=sorted(visited_iata),
+            visited_iata=visited_iata,
             visited_cities=visited_cities,
             engine_version=self._version(),
         )
