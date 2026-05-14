@@ -24,3 +24,6 @@ k8s/secret-template-*.yaml
 engine/.venv/
 engine/.pytest_cache/
 engine/uv.lock
+
+# Gurobi WLS license (secret — never commit)
+gurobi.lic
