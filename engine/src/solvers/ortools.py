@@ -70,7 +70,7 @@ class OrToolsSolver(BaseSolver):
         )
 
         # 필수 방문 국가 결정
-        required = set(req.required_countries) if req.required_countries else graph.hubs
+        required = set(req.required_countries) if req.required_countries is not None else graph.hubs
 
         # ── y[d] 도시 방문 결정변수 ──────────────────────────
         # 내륙 도시 단위 (도시 1개 = y 1개)

@@ -95,6 +95,36 @@ class TestOrToolsSolverBasic:
         result = solver.solve(mini_graph, req)
         assert "ortools" in result.engine_version
 
+    def test_required_countries_empty_vs_none(self, solver: OrToolsSolver, mini_graph) -> None:
+        """required_countries=[] → 허브 강제 없음. None → 전체 허브 강제. 둘은 구분돼야 함.
+
+        타이트한 예산에서 None은 전체 허브 강제로 infeasible, []는 허브를 건너뛸 수
+        있어 feasible — 이 차이로 시맨틱을 결정론적으로 검증한다.
+        """
+        common = dict(deadline_days=30, start_hub="CDG", w_cost=0.5)
+
+        # 넉넉한 예산: 둘 다 feasible, None은 전체 허브 방문
+        r_none = solver.solve(
+            mini_graph, OptimizeRequest(budget_won=30_000_000, required_countries=None, **common)
+        )
+        assert r_none.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert set(r_none.visited_iata) == set(mini_graph.hubs)
+
+        # 타이트한 예산: None은 전체 허브 강제 → infeasible, []는 허브 skip 가능 → feasible
+        # mini fixture 최소 비용 계산:
+        #   전체 허브+도시 방문 최소 ~1,120,000원 (CDG↔NCE 100k + CDG→FCO 300k +
+        #   FCO↔MIL 160k + FCO→AMS 350k + AMS→CDG 210k)
+        #   CDG만 방문 시 최소 100,000원 (CDG↔NCE_City 왕복)
+        # → 1,000,000원 예산은 None(전체 허브 강제) → INFEASIBLE, [] → FEASIBLE 분기를 보장
+        r_none_tight = solver.solve(
+            mini_graph, OptimizeRequest(budget_won=1_000_000, required_countries=None, **common)
+        )
+        r_empty_tight = solver.solve(
+            mini_graph, OptimizeRequest(budget_won=1_000_000, required_countries=[], **common)
+        )
+        assert r_none_tight.status == Status.INFEASIBLE
+        assert r_empty_tight.status in (Status.OPTIMAL, Status.FEASIBLE)
+
 
 class TestOrToolsFallback:
     def test_get_solver_returns_ortools_when_gurobi_unavailable(self) -> None:

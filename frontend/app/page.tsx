@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, parseAsArrayOf, useQueryState } from "nuqs";
+import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, parseAsArrayOf, parseAsStringEnum, useQueryState } from "nuqs";
 import { OptimizeForm, type FocusField } from "@/components/form/optimize-form";
 import { SummaryCards } from "@/components/result/summary-cards";
 import { RouteList } from "@/components/result/route-list";
@@ -50,7 +50,14 @@ function PageInner() {
   const stayDays = parseStayDaysString(stayDaysStr);
   const setStayDays = (next: Record<string, number>) => setStayDaysStr(serializeStayDays(next));
 
-  const [requiredCountries, setRequiredCountries] = useState<string[] | null>(null);
+  const [mode, setMode] = useQueryState(
+    "mode",
+    parseAsStringEnum<"full" | "select">(["full", "select"]).withDefault("full"),
+  );
+  const [selectedHubs, setSelectedHubs] = useQueryState(
+    "selected_hubs",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
 
   const [requiredCitiesArr, setRequiredCitiesArr] = useQueryState(
     "required_cities",
@@ -71,14 +78,15 @@ function PageInner() {
   }, [focusField]);
 
   const stayDaysPayload = Object.keys(stayDays).length > 0 ? stayDays : null;
+  const isFull = mode === "full";
 
   const { result, loading, error } = useOptimize({
     budget_won: params.budget_won,
     deadline_days: params.deadline_days,
     start_hub: params.start_hub,
     w_cost: params.w_cost,
-    required_countries: requiredCountries,
-    required_cities: requiredCities,
+    required_countries: isFull ? null : selectedHubs,
+    required_cities: isFull ? null : requiredCities,
     stay_days: stayDaysPayload,
   });
 
@@ -94,16 +102,18 @@ function PageInner() {
           deadline_days={params.deadline_days}
           start_hub={params.start_hub}
           w_cost={params.w_cost}
-          required_countries={requiredCountries}
-          required_cities={requiredCities}
-          stay_days={stayDays}
+          mode={mode}
+          selectedHubs={selectedHubs}
+          selectedCities={requiredCities ?? []}
+          stayDays={stayDays}
           focusField={focusField}
           onBudgetChange={(v) => setParams({ budget_won: v })}
           onDeadlineChange={(v) => setParams({ deadline_days: v })}
           onHubChange={(v) => setParams({ start_hub: v })}
           onWeightChange={(v) => setParams({ w_cost: v })}
-          onCountriesChange={setRequiredCountries}
-          onCitiesChange={setRequiredCities}
+          onModeChange={setMode}
+          onSelectedHubsChange={setSelectedHubs}
+          onSelectedCitiesChange={setRequiredCities}
           onStayDaysChange={setStayDays}
         />
       </aside>
@@ -126,7 +136,7 @@ function PageInner() {
         {error && <ErrorState message={error} onRetry={() => window.location.reload()} />}
         {result?.status === "infeasible" && (
           <InfeasibleBanner
-            requiredCountries={requiredCountries}
+            requiredCountries={isFull || selectedHubs.length === 0 ? null : selectedHubs}
             currentBudget={params.budget_won}
             currentDays={params.deadline_days}
             onFocusBudget={() => setFocusField("budget")}
@@ -152,7 +162,7 @@ function PageInner() {
                 edges={result.route}
                 visitedIata={result.visited_iata}
                 activeIndex={activeIndex}
-                requiredCountries={requiredCountries}
+                requiredCountries={isFull || selectedHubs.length === 0 ? null : selectedHubs}
                 startHub={params.start_hub}
                 onEdgeClick={(i) => { setOpenIndex(i); setActiveIndex(i); }}
                 onEdgeHover={(i) => { if (openIndex === null) setActiveIndex(i); }}

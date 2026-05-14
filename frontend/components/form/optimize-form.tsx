@@ -7,9 +7,7 @@ import { HubSelect } from "./hub-select";
 import { BudgetSlider } from "./budget-slider";
 import { DeadlineSlider } from "./deadline-slider";
 import { WeightSlider } from "./weight-slider";
-import { CountrySelect } from "./country-select";
-import { CitySelect } from "./city-select";
-import { StayDaysInput } from "./stay-days-input";
+import { DestinationPicker, type PickerMode } from "./destination-picker";
 
 export type FocusField = "budget" | "deadline" | "countries" | null;
 
@@ -18,16 +16,18 @@ interface OptimizeFormProps {
   deadline_days: number;
   start_hub: string;
   w_cost: number;
-  required_countries: string[] | null;
-  required_cities: string[] | null;
-  stay_days: Record<string, number>;
+  mode: PickerMode;
+  selectedHubs: string[];
+  selectedCities: string[];
+  stayDays: Record<string, number>;
   focusField: FocusField;
   onBudgetChange: (v: number) => void;
   onDeadlineChange: (v: number) => void;
   onHubChange: (v: string) => void;
   onWeightChange: (v: number) => void;
-  onCountriesChange: (v: string[] | null) => void;
-  onCitiesChange: (v: string[] | null) => void;
+  onModeChange: (v: PickerMode) => void;
+  onSelectedHubsChange: (v: string[]) => void;
+  onSelectedCitiesChange: (v: string[]) => void;
   onStayDaysChange: (v: Record<string, number>) => void;
 }
 
@@ -63,17 +63,17 @@ export function OptimizeForm(props: OptimizeFormProps) {
         </FocusableField>
         <WeightSlider value={props.w_cost} onChange={props.onWeightChange} />
         <FocusableField fieldRef={countriesRef} active={props.focusField === "countries"}>
-          <CountrySelect value={props.required_countries} onApply={props.onCountriesChange} />
+          <DestinationPicker
+            mode={props.mode}
+            selectedHubs={props.selectedHubs}
+            selectedCities={props.selectedCities}
+            stayDays={props.stayDays}
+            onModeChange={props.onModeChange}
+            onSelectedHubsChange={props.onSelectedHubsChange}
+            onSelectedCitiesChange={props.onSelectedCitiesChange}
+            onStayDaysChange={props.onStayDaysChange}
+          />
         </FocusableField>
-        <CitySelect value={props.required_cities} onApply={props.onCitiesChange} />
-        <StayDaysInput
-          selectedCountries={props.required_countries}
-          stayDays={props.stay_days}
-          onChange={props.onStayDaysChange}
-        />
-        <p className="text-xs text-muted-foreground text-center">
-          슬라이더 변경 시 자동 재계산 · 국가 변경은 "적용" 클릭
-        </p>
       </CardContent>
     </Card>
   );

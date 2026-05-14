@@ -121,7 +121,7 @@ components:
   - deadline-slider
   - weight-slider
   - hub-select
-  - country-select
+  - destination-picker    # 방문지 선택 + 체류일 (완주/선택 모드 토글)
   - summary-card          # 요약 4-grid
   - route-map             # Leaflet + Carto Voyager 타일
   - route-marker
@@ -413,7 +413,7 @@ DESIGN.md 자체의 운영 룰. 6개월 뒤 본인이 까먹지 않게 박아둡
 
 미구현 (Phase 2 — 실제 필요 시점에 도입):
 
-- **§15 Form Validation** — 현재 슬라이더 위주라 invalid 상태 거의 없음. country-select 등 폼 인풋 도입 시점에 적용
+- **§15 Form Validation** — 현재 슬라이더 위주라 invalid 상태 거의 없음. destination-picker 등 폼 인풋 확장 시점에 적용
 - **§18 Print CSS** — 종설 발표 일주일 전 도입 권장
 
 ## 13. Dark Mode
@@ -497,7 +497,7 @@ Tailwind 기본 `transition-colors`(150ms)는 `motion.fast` 근사로 그대로 
 
 ## 15. Form Validation
 
-인풋 에러 상태 표현 패턴. SME Tour는 슬라이더 위주라 사용자 invalid 상태가 거의 없지만 `country-select`("최소 1개 선택") 등에서 사용.
+인풋 에러 상태 표현 패턴. SME Tour는 슬라이더 위주라 사용자 invalid 상태가 거의 없지만 `destination-picker`(선택 방문 모드 등) 등에서 사용.
 
 ### 15.1 Visual Pattern
 
