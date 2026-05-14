@@ -5,10 +5,35 @@ on:
     branches: [main]
     paths: [engine/**, .github/workflows/engine-build.yml]
   pull_request:
-    paths: [engine/**]
+    paths: [engine/**, .github/workflows/engine-build.yml]
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # ".[gurobi,dev]" — gurobipy(계약/Gurobi 테스트) + pytest 포함
+      - run: pip install --upgrade pip && pip install ".[gurobi,dev]"
+
+      # WLS 시크릿이 주입되면 Gurobi + 계약 테스트가 실제로 실행된다.
+      # 미주입 시 해당 테스트는 skip (test_solvers_gurobi/contract의 가드).
+      - run: pytest -q
+        env:
+          GUROBI_LICENSE_ID: ${{ secrets.GUROBI_LICENSE_ID }}
+          GUROBI_WLS_ACCESS_ID: ${{ secrets.GUROBI_WLS_ACCESS_ID }}
+          GUROBI_WLS_SECRET: ${{ secrets.GUROBI_WLS_SECRET }}
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
