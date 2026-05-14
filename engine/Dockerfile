@@ -10,9 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Install Python deps first (layer cache)
+# ".[gurobi]" 로 optional-dependencies의 gurobi 그룹(gurobipy) 포함
 COPY pyproject.toml README.md ./
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir .
+    pip install --no-cache-dir ".[gurobi]"
 
 # Copy source + data
 COPY src/ ./src/

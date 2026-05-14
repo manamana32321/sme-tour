@@ -25,6 +25,11 @@ spec:
               value: "https://sme-tour.json-server.win,http://localhost:3000"
             - name: CORS_ALLOWED_ORIGIN_REGEX
               value: "https://sme-tour-.*\\.vercel\\.app"
+          envFrom:
+            # Gurobi WLS 자격증명 (GUROBI_LICENSE_ID / GUROBI_WLS_ACCESS_ID / GUROBI_WLS_SECRET)
+            # SealedSecret: k8s/gurobi-credentials/sealed-secret.yaml
+            - secretRef:
+                name: sme-tour-gurobi-wls
           livenessProbe:
             httpGet:
               path: /healthz
