@@ -95,6 +95,19 @@ class TestOrToolsSolverBasic:
         result = solver.solve(mini_graph, req)
         assert "ortools" in result.engine_version
 
+    def test_required_countries_empty_vs_none(self, solver: OrToolsSolver, mini_graph) -> None:
+        """required_countries=[] → 허브 강제 없음. None → 전체 허브 강제. 둘은 구분돼야 함."""
+        common = dict(budget_won=30_000_000, deadline_days=30, start_hub="CDG", w_cost=0.5)
+        r_none = solver.solve(mini_graph, OptimizeRequest(**common, required_countries=None))
+        r_empty = solver.solve(mini_graph, OptimizeRequest(**common, required_countries=[]))
+
+        assert r_none.status in (Status.OPTIMAL, Status.FEASIBLE)
+        assert r_empty.status in (Status.OPTIMAL, Status.FEASIBLE)
+        # None: mini fixture의 모든 허브를 강제 방문
+        assert set(r_none.visited_iata) == set(mini_graph.hubs)
+        # []: 출발 허브만 강제 → solver가 자유롭게 더 적게 방문 가능
+        assert len(r_empty.visited_iata) < len(r_none.visited_iata)
+
 
 class TestOrToolsFallback:
     def test_get_solver_returns_ortools_when_gurobi_unavailable(self) -> None:

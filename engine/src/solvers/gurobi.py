@@ -159,7 +159,7 @@ class GurobiSolver(BaseSolver):
         )
 
         # ── 흐름 보존 제약 ──────────────────────────────────
-        required = set(req.required_countries) if req.required_countries else graph.hubs
+        required = set(req.required_countries) if req.required_countries is not None else graph.hubs
 
         for n in graph.virtual_nodes:
             if n in hub_virtual_nodes:
