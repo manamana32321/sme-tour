@@ -54,7 +54,10 @@ function PageInner() {
     "mode",
     parseAsStringEnum<"full" | "select">(["full", "select"]).withDefault("full"),
   );
-  const [selectedHubs, setSelectedHubs] = useState<string[]>([]);
+  const [selectedHubs, setSelectedHubs] = useQueryState(
+    "selected_hubs",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
 
   const [requiredCitiesArr, setRequiredCitiesArr] = useQueryState(
     "required_cities",
@@ -110,7 +113,7 @@ function PageInner() {
           onWeightChange={(v) => setParams({ w_cost: v })}
           onModeChange={setMode}
           onSelectedHubsChange={setSelectedHubs}
-          onSelectedCitiesChange={(v) => setRequiredCities(v.length > 0 ? v : null)}
+          onSelectedCitiesChange={setRequiredCities}
           onStayDaysChange={setStayDays}
         />
       </aside>
