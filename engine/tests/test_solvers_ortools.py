@@ -116,10 +116,12 @@ class TestOrToolsSolverBasic:
         #   FCO↔MIL 160k + FCO→AMS 350k + AMS→CDG 210k)
         #   CDG만 방문 시 최소 100,000원 (CDG↔NCE_City 왕복)
         # → 1,000,000원 예산은 None(전체 허브 강제) → INFEASIBLE, [] → FEASIBLE 분기를 보장
-        r_none_tight = solver.solve(
+        # NOTE: 공개 ``solve()`` 는 INFEASIBLE 시 자동 완화 wrapper를 거치므로,
+        # 원 솔버 시맨틱만 검증하려면 ``_solve_internal`` 을 직접 호출한다.
+        r_none_tight = solver._solve_internal(
             mini_graph, OptimizeRequest(budget_won=1_000_000, required_countries=None, **common)
         )
-        r_empty_tight = solver.solve(
+        r_empty_tight = solver._solve_internal(
             mini_graph, OptimizeRequest(budget_won=1_000_000, required_countries=[], **common)
         )
         assert r_none_tight.status == Status.INFEASIBLE
@@ -324,7 +326,8 @@ class TestOrToolsStayDays:
             w_cost=0.5,
             stay_days={"CDG": 5},  # 5일 * 1440분 = 7200분
         )
-        tight_result = solver.solve(mini_graph, tight_req)
+        # _solve_internal: 자동 완화 wrapper 우회. 원 솔버 시맨틱만 검증.
+        tight_result = solver._solve_internal(mini_graph, tight_req)
         # 이동시간이 0분일 수 없으므로 INFEASIBLE이어야
         assert tight_result.status == Status.INFEASIBLE
 

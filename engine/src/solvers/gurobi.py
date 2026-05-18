@@ -77,8 +77,12 @@ class GurobiSolver(BaseSolver):
                 f"Gurobi WLS 인증 실패: {e}. 라이센스 값을 확인해주세요."
             ) from e
 
-    def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
-        """그래프와 사용자 제약으로 Clustered TSP 최적해를 찾는다."""
+    def _solve_internal(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
+        """그래프와 사용자 제약으로 Clustered TSP 최적해를 찾는다.
+
+        대안 탐색은 :class:`BaseSolver.solve` 가 wrapper로 처리하므로 여기서는
+        원 조건으로만 푼다.
+        """
         start = time_mod.perf_counter()
         self._last_y_values = None
 
