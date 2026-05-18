@@ -123,12 +123,37 @@ class RouteEdge(BaseModel):
     time_minutes: int
 
 
+class Alternative(BaseModel):
+    """원 조건 infeasible 시 자동 완화로 풀린 대안의 입력 조건.
+
+    솔버가 ``find_alternative_conditions`` 로 찾은 첫 OPTIMAL 후보를 채워 응답한다.
+    경로/비용/시간 같은 결과 자체는 ``OptimizeResult`` 의 기존 필드(route, total_*)
+    에 그대로 들어가고, 이 클래스는 **"어떤 조건이 적용되었는지"** 만 노출한다.
+
+    ``applied_*`` 필드는 ``OptimizeRequest`` 의 동일 이름 필드와 1:1 대응 — 요청
+    값과 다르면 그 항목이 완화된 것이다. ``type`` 은 사람이 읽는 라벨.
+    """
+
+    type: str
+    """완화 분류 라벨 (예: '선택 도시 일부 제외: [CDG] 제외', '예산 증가')."""
+
+    applied_budget_won: int
+    applied_deadline_days: int
+    applied_required_countries: list[str] | None
+    applied_required_cities: list[str] | None
+    applied_stay_days: dict[str, int] | None
+
+
 class OptimizeResult(BaseModel):
     """`/optimize` 응답 본문.
 
     infeasible/timeout 케이스에서도 status 필드만 설정하고
     route/총합은 기본값(빈 리스트, 0)으로 반환합니다.
     HTTP 상태 코드 매핑은 `main.py` 의 exception handler 참조.
+
+    ``alternative`` 이 채워지면 ``status`` 는 원 조건이 아닌 **완화된 조건의
+    OPTIMAL/FEASIBLE 해**임을 의미한다. 4단계 완화 모두 실패하면
+    ``status=infeasible`` + ``alternative=None``.
     """
 
     status: Status
@@ -141,3 +166,4 @@ class OptimizeResult(BaseModel):
     visited_iata: list[str]
     visited_cities: list[str]
     engine_version: str
+    alternative: Alternative | None = None

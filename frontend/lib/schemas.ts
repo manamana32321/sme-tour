@@ -29,6 +29,20 @@ export const RouteEdgeSchema = z.object({
 });
 export type RouteEdge = z.infer<typeof RouteEdgeSchema>;
 
+/** 원 조건이 infeasible일 때 솔버가 자동 완화해서 풀어낸 대안의 입력 조건.
+ *  경로/비용/시간은 OptimizeResult의 기존 필드(route, total_*)에 그대로 들어가고,
+ *  여기는 **어떤 조건이 적용되었는지** 만 노출. applied_* 는 OptimizeRequest의
+ *  동일 이름 필드와 1:1 — 요청값과 다르면 그 항목이 완화된 것. */
+export const AlternativeSchema = z.object({
+  type: z.string(),
+  applied_budget_won: z.number().int(),
+  applied_deadline_days: z.number().int(),
+  applied_required_countries: z.array(z.string()).nullable(),
+  applied_required_cities: z.array(z.string()).nullable(),
+  applied_stay_days: z.record(z.string(), z.number().int()).nullable(),
+});
+export type Alternative = z.infer<typeof AlternativeSchema>;
+
 export const OptimizeResultSchema = z.object({
   status: StatusEnum,
   route: z.array(RouteEdgeSchema),
@@ -40,5 +54,6 @@ export const OptimizeResultSchema = z.object({
   visited_iata: z.array(z.string()),
   visited_cities: z.array(z.string()),
   engine_version: z.string(),
+  alternative: AlternativeSchema.nullable().default(null),
 });
 export type OptimizeResult = z.infer<typeof OptimizeResultSchema>;

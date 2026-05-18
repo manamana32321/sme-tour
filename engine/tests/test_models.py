@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from src.models import OptimizeRequest, OptimizeResult, RouteEdge, Status
+from src.models import Alternative, OptimizeRequest, OptimizeResult, RouteEdge, Status
 
 
 class TestOptimizeRequest:
@@ -245,3 +245,65 @@ class TestOptimizeResult:
                 visited_cities=[],
                 engine_version="x",
             )
+
+
+class TestAlternative:
+    """원 조건 infeasible 시 자동 완화 결과를 노출하는 Alternative 모델."""
+
+    def test_default_alternative_is_none(self) -> None:
+        """alternative 필드는 기본 None — 평소 응답엔 안 들어감."""
+        result = OptimizeResult(
+            status=Status.OPTIMAL,
+            route=[],
+            total_cost_won=0,
+            total_time_minutes=0,
+            objective_value=0.0,
+            solve_time_ms=0,
+            solver="gurobi",
+            visited_iata=[],
+            visited_cities=[],
+            engine_version="x",
+        )
+        assert result.alternative is None
+
+    def test_alternative_populated(self) -> None:
+        """완화 적용 시 alternative 객체가 채워지고, applied_* 필드로 변경된
+        입력이 노출된다."""
+        alt = Alternative(
+            type="선택 도시 일부 제외: ['CDG'] 제외",
+            applied_budget_won=10_000_000,
+            applied_deadline_days=21,
+            applied_required_countries=["FCO", "VIE"],
+            applied_required_cities=["NCE_City", "Interlaken_City"],
+            applied_stay_days={"FCO": 2, "VIE": 1},
+        )
+        result = OptimizeResult(
+            status=Status.OPTIMAL,
+            route=[],
+            total_cost_won=1_224_954,
+            total_time_minutes=11_700,
+            objective_value=0.2557,
+            solve_time_ms=80,
+            solver="gurobi",
+            visited_iata=["FCO", "VIE"],
+            visited_cities=["NCE_City", "Interlaken_City"],
+            engine_version="x",
+            alternative=alt,
+        )
+        assert result.alternative is not None
+        assert result.alternative.type.startswith("선택 도시 일부 제외")
+        assert result.alternative.applied_required_countries == ["FCO", "VIE"]
+
+    def test_alternative_accepts_null_applied_fields(self) -> None:
+        """applied_required_* / applied_stay_days 는 None 허용 (해당 입력
+        없었으면 자연스럽게 None)."""
+        alt = Alternative(
+            type="예산 증가",
+            applied_budget_won=12_000_000,
+            applied_deadline_days=14,
+            applied_required_countries=None,
+            applied_required_cities=None,
+            applied_stay_days=None,
+        )
+        assert alt.applied_required_countries is None
+        assert alt.applied_stay_days is None
