@@ -200,7 +200,8 @@ class TestGurobiStayDays:
             start_hub="CDG", w_cost=0.5,
             stay_days={"CDG": 5},  # 5일 * 1440분 = 7200분, deadline도 7200분
         )
-        tight_result = solver.solve(mini_graph, tight_req)
+        # _solve_internal: 자동 완화 wrapper 우회. 원 솔버 시맨틱만 검증.
+        tight_result = solver._solve_internal(mini_graph, tight_req)
         assert tight_result.status == Status.INFEASIBLE
 
     def test_stay_days_adds_to_time_constraint_loose(self, solver, mini_graph) -> None:
