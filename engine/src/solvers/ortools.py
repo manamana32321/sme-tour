@@ -41,7 +41,8 @@ class OrToolsSolver(BaseSolver):
         """OR-Tools는 라이센스 불필요."""
         self._last_y_values: dict[str, int] | None = None
 
-    def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
+    def _solve_internal(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
+        """원 조건으로만 푸는 솔버 — 대안 탐색은 BaseSolver.solve 가 wrapper."""
         start = time_mod.perf_counter()
         # 매 호출 시작 시 디버그 인터페이스 reset (이전 호출의 stale state 방지)
         self._last_y_values = None

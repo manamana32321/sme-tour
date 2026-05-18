@@ -20,8 +20,15 @@ class TestBaseSolverContract:
         with pytest.raises(TypeError):
             BaseSolver()  # type: ignore[abstract]
 
-    def test_solve_is_abstract_method(self) -> None:
-        assert getattr(BaseSolver.solve, "__isabstractmethod__", False) is True
+    def test_solve_internal_is_abstract_method(self) -> None:
+        """``_solve_internal`` 만 추상 — ``solve`` 는 템플릿 메서드(대안 탐색 wrapper)."""
+        assert (
+            getattr(BaseSolver._solve_internal, "__isabstractmethod__", False) is True
+        )
+
+    def test_solve_is_concrete_template_method(self) -> None:
+        """공개 ``solve`` 는 BaseSolver에서 구현된 템플릿 메서드여야 한다."""
+        assert getattr(BaseSolver.solve, "__isabstractmethod__", False) is False
 
     def test_solve_signature(self) -> None:
         """solve는 (graph, req) -> OptimizeResult 시그니처여야 한다."""
@@ -30,12 +37,14 @@ class TestBaseSolverContract:
         assert params == ["self", "graph", "req"]
 
     def test_custom_subclass_can_be_instantiated(self) -> None:
-        """서브클래스가 solve를 구현하면 정상 생성되어야 한다."""
+        """서브클래스가 ``_solve_internal`` 을 구현하면 정상 생성되어야 한다."""
 
         class DummySolver(BaseSolver):
             name = "dummy"
 
-            def solve(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
+            def _solve_internal(
+                self, graph: Graph, req: OptimizeRequest
+            ) -> OptimizeResult:
                 return OptimizeResult(
                     status=Status.OPTIMAL,
                     route=[],
