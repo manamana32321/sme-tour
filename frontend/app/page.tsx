@@ -6,12 +6,14 @@ import { useQueryStates, parseAsInteger, parseAsFloat, parseAsString, parseAsArr
 import { OptimizeForm, type FocusField } from "@/components/form/optimize-form";
 import { SummaryCards } from "@/components/result/summary-cards";
 import { RouteList } from "@/components/result/route-list";
+import { AlternativeBanner } from "@/components/result/alternative-banner";
 import { InfeasibleBanner } from "@/components/shared/infeasible-banner";
 import { ErrorState } from "@/components/shared/error-state";
 import { CopyUrlButton } from "@/components/shared/copy-url-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOptimize } from "@/hooks/use-optimize";
+import type { Alternative } from "@/lib/schemas";
 
 const RouteMap = dynamic(
   () => import("@/components/result/route-map").then((m) => m.RouteMap),
@@ -79,6 +81,22 @@ function PageInner() {
 
   const stayDaysPayload = Object.keys(stayDays).length > 0 ? stayDays : null;
   const isFull = mode === "full";
+
+  const applyAlternative = (alt: Alternative) => {
+    setParams({
+      budget_won: alt.applied_budget_won,
+      deadline_days: alt.applied_deadline_days,
+    });
+    if (alt.applied_required_countries === null) {
+      setMode("full");
+      setSelectedHubs([]);
+    } else {
+      setMode("select");
+      setSelectedHubs(alt.applied_required_countries);
+    }
+    setRequiredCities(alt.applied_required_cities);
+    setStayDays(alt.applied_stay_days ?? {});
+  };
 
   const { result, loading, error } = useOptimize({
     budget_won: params.budget_won,
@@ -155,9 +173,20 @@ function PageInner() {
         )}
 
         {result && result.status !== "infeasible" && (
-          <div className={loading ? "opacity-40 pointer-events-none transition-opacity" : "transition-opacity"}>
+          <div className={loading ? "opacity-40 pointer-events-none transition-opacity space-y-4" : "transition-opacity space-y-4"}>
+            {result.alternative && (
+              <AlternativeBanner
+                alternative={result.alternative}
+                requestBudget={params.budget_won}
+                requestDeadline={params.deadline_days}
+                requestRequiredCountries={isFull || selectedHubs.length === 0 ? null : selectedHubs}
+                requestRequiredCities={isFull ? null : requiredCities}
+                requestStayDays={stayDays}
+                onApplyAlternative={() => applyAlternative(result.alternative!)}
+              />
+            )}
             <SummaryCards result={result} />
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               <RouteMap
                 edges={result.route}
                 visitedIata={result.visited_iata}
