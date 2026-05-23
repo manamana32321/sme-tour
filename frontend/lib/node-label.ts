@@ -1,12 +1,13 @@
 /** 가상 노드명 → 사람이 읽을 수 있는 라벨 변환. */
 
 import { Plane, Train, RefreshCw, HelpCircle, type LucideIcon } from "lucide-react";
+import { CITY_BY_NODE } from "./cities";
 import { HUBS } from "./hubs";
 
 /**
  * `CDG_Entry` → `🇫🇷 파리 (CDG)`
- * `NCE_City` → `니스 (NCE)`
- * `Cesky Krumlov_City` → `Cesky Krumlov`
+ * `NCE_City` → `🇫🇷 니스` (parent hub의 국기 + 한글명)
+ * 매핑 없는 `Cesky Krumlov_City` → `Cesky Krumlov` (fallback)
  */
 export function formatNode(node: string): string {
   // {IATA}_Entry / {IATA}_Exit
@@ -17,8 +18,13 @@ export function formatNode(node: string): string {
     return hubMatch[1];
   }
 
-  // {Name}_City
+  // {Name}_City — CITY_BY_NODE 매핑 있으면 한글명 + parent 국기
   if (node.endsWith("_City")) {
+    const city = CITY_BY_NODE[node];
+    if (city) {
+      const parent = HUBS[city.parent_hub];
+      return parent ? `${parent.flag} ${city.city_kr}` : city.city_kr;
+    }
     return node.replace(/_City$/, "");
   }
 
@@ -45,12 +51,20 @@ export function formatMode(mode: string): { Icon: LucideIcon; label: string } {
   return { Icon: HelpCircle, label: mode };
 }
 
-/** 노드에서 국가 정보 추출 (허브만 가능, 내륙 도시는 null) */
+/** 노드에서 국가 정보 추출. 내륙 도시는 parent 허브의 국가로 매핑. */
 export function nodeCountry(node: string): { flag: string; country_kr: string } | null {
   const hubMatch = node.match(/^([A-Z]{3})_(Entry|Exit)$/);
   if (hubMatch) {
     const hub = HUBS[hubMatch[1]];
     if (hub) return { flag: hub.flag, country_kr: hub.country_kr };
+    return null;
+  }
+  if (node.endsWith("_City")) {
+    const city = CITY_BY_NODE[node];
+    if (city) {
+      const parent = HUBS[city.parent_hub];
+      if (parent) return { flag: parent.flag, country_kr: parent.country_kr };
+    }
   }
   return null;
 }
