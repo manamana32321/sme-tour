@@ -167,3 +167,5 @@ class OptimizeResult(BaseModel):
     visited_cities: list[str]
     engine_version: str
     alternative: Alternative | None = None
+    total_search_ms: int | None = None
+    """대안 탐색에 쓴 wall-clock ms. None=대안 탐색 미진입(원 해 OPTIMAL/TIMEOUT 등)."""

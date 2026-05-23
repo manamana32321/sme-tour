@@ -43,11 +43,13 @@ class BaseSolver(ABC):
         result = self._solve_internal(graph, req)
         if result.status != Status.INFEASIBLE:
             return result
-        finding = find_alternative(graph, req, self._solve_internal)
+        finding, search_ms = find_alternative(graph, req, self._solve_internal)
         if finding is None:
-            return result
+            return result.model_copy(update={"total_search_ms": search_ms})
         alt, alt_result = finding
-        return alt_result.model_copy(update={"alternative": alt})
+        return alt_result.model_copy(
+            update={"alternative": alt, "total_search_ms": search_ms}
+        )
 
     @abstractmethod
     def _solve_internal(self, graph: Graph, req: OptimizeRequest) -> OptimizeResult:
