@@ -7,7 +7,7 @@ const TIMEOUT_MS = 35_000;
 
 // ── 에러 클래스 ──────────────────────────────────────────
 export class TimeoutError extends Error {
-  constructor() { super("경로 계산이 시간을 초과했어요. (30초)"); }
+  constructor() { super("경로 계산이 시간을 초과했어요. (35초)"); }
 }
 export class ValidationError extends Error {
   detail: unknown;

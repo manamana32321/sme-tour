@@ -119,7 +119,9 @@ class TestFindAlternativeWithMock:
         def solve_once(_g: Graph, _r: OptimizeRequest) -> OptimizeResult:
             return self._make_infeasible_result()
 
-        assert find_alternative(self._stub_graph(), req, solve_once) is None
+        finding, elapsed_ms = find_alternative(self._stub_graph(), req, solve_once)
+        assert finding is None
+        assert elapsed_ms >= 0
 
     def test_city_removal_strategy_picks_smallest_removal(self) -> None:
         """전략 3은 ``remove_count=1`` 부터 시작 — 작은 제외부터 점진 탐색."""
@@ -140,13 +142,39 @@ class TestFindAlternativeWithMock:
                 return self._make_feasible_result()
             return self._make_infeasible_result()
 
-        finding = find_alternative(self._stub_graph(), req, solve_once)
+        finding, _elapsed = find_alternative(self._stub_graph(), req, solve_once)
         assert finding is not None
         alt, _ = finding
         assert alt.type.startswith("선택 도시 일부 제외")
         # 가장 적은 제외 = 1개 제외부터 시도하므로 applied는 2개 남아 있어야
         assert alt.applied_required_countries is not None
         assert len(alt.applied_required_countries) == 2
+
+    def test_max_total_ms_terminates_early(self, monkeypatch) -> None:
+        """``max_total_ms`` 초과 시 더 이상 솔버를 호출하지 않고 빠르게 None 반환."""
+        # 전략 4의 조합 폭발(C(N,k))을 막는 게 본 기능 — 첫 호출 후 시간 초과를
+        # 시뮬레이션해 두 번째 solve_once는 절대 불리지 않음을 확인.
+        req = self._make_req(required_countries=["CDG", "FCO", "AMS"])
+        call_count = {"n": 0}
+
+        def solve_once(_g: Graph, _r: OptimizeRequest) -> OptimizeResult:
+            call_count["n"] += 1
+            return self._make_infeasible_result()
+
+        # perf_counter를 호출마다 0.5s씩 점프시킴 — max_total_ms=100ms면 첫 체크부터 초과
+        ticks = iter([0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0])
+        monkeypatch.setattr(
+            "src.solvers._alternative.time.perf_counter", lambda: next(ticks)
+        )
+
+        finding, elapsed_ms = find_alternative(
+            self._stub_graph(), req, solve_once, max_total_ms=100
+        )
+        assert finding is None
+        # 가짜 perf_counter는 호출마다 0.5초 점프 — 적어도 0.5초(500ms)는 찍혀야
+        assert elapsed_ms >= 500
+        # over_budget()이 첫 전략의 첫 시도에서 이미 끊었으므로 호출 0회
+        assert call_count["n"] == 0
 
 
 class TestHelpers:

@@ -55,5 +55,7 @@ export const OptimizeResultSchema = z.object({
   visited_cities: z.array(z.string()),
   engine_version: z.string(),
   alternative: AlternativeSchema.nullable().default(null),
+  /** 대안 탐색에 쓴 wall-clock ms. null=원 해가 풀려서 대안 탐색 미진입. */
+  total_search_ms: z.number().int().nullable().default(null),
 });
 export type OptimizeResult = z.infer<typeof OptimizeResultSchema>;

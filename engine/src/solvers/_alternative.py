@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from itertools import combinations
 
@@ -21,10 +22,16 @@ from ..graph import Graph
 from ..models import Alternative, OptimizeRequest, OptimizeResult, Status
 
 SolveCallable = Callable[[Graph, OptimizeRequest], OptimizeResult]
+SearchFinding = tuple[Alternative, OptimizeResult]
 
 # OptimizeRequest 스키마의 상한과 일치해야 함 (engine/src/models.py)
 _BUDGET_MAX = 30_000_000
 _DEADLINE_MAX = 30
+
+# 프론트 TIMEOUT_MS(35,000)와 ingress timeout(보통 60s)을 모두 안전하게
+# 피할 수 있는 마진. 25초 이내에 못 풀면 사용자에게 infeasible로 떨어뜨려
+# 직접 조정을 유도하는 게 ux적으로 더 정직 (대안 탐색 무한 진행 < 빠른 실패).
+_DEFAULT_MAX_TOTAL_MS = 25_000
 
 # 전략 1 (단독 예산 증가) — 작은 폭부터 점진적으로
 _BUDGET_MULTIPLIERS_SIMPLE: tuple[float, ...] = (1.1, 1.2, 1.3, 1.5, 2.0)
@@ -41,50 +48,77 @@ def find_alternative(
     graph: Graph,
     req: OptimizeRequest,
     solve_once: SolveCallable,
-) -> tuple[Alternative, OptimizeResult] | None:
+    *,
+    max_total_ms: int = _DEFAULT_MAX_TOTAL_MS,
+) -> tuple[SearchFinding | None, int]:
     """원 조건 infeasible 시 4단계 완화로 첫 OPTIMAL 후보를 찾는다.
 
     Args:
         graph: 솔버에 그대로 전달할 그래프 (불변).
         req: 원 요청. 이 함수가 ``model_copy(update=...)`` 로 변형해 시도한다.
         solve_once: 재귀 없이 한 번만 푸는 솔버 호출 (보통 ``solver._solve_internal``).
+        max_total_ms: 전체 wall-clock 예산(ms). 매 solver 호출 직전에 누적 시간을
+            체크해 초과하면 더 이상 탐색하지 않고 ``(None, elapsed_ms)`` 반환.
+            전략 4의 조합 폭발(C(N, k))로 인한 응답 1분+ → 프론트 timeout 또는
+            ingress 끊김을 방지. 디폴트 25초는 프론트 35초 TIMEOUT_MS 안쪽 + 안전
+            마진 10초.
 
     Returns:
-        ``(Alternative, OptimizeResult)`` — 완화 메타와 그 입력의 풀이 결과.
-        모든 전략 실패 시 ``None``.
+        ``((Alternative, OptimizeResult) | None, elapsed_ms)``.
+        후보를 찾으면 첫 요소가 ``(alt, result)``, 못 찾으면(모든 전략 실패 또는
+        예산 초과) ``None``. 두 번째는 실제로 탐색에 쓴 wall-clock ms (모니터링용).
     """
+    start = time.perf_counter()
     user_selected = _user_selected(req)
+
+    def elapsed_ms() -> int:
+        return int((time.perf_counter() - start) * 1000)
+
+    def over_budget() -> bool:
+        return elapsed_ms() >= max_total_ms
 
     # 전략 1: 예산 증가
     for mult in _BUDGET_MULTIPLIERS_SIMPLE:
+        if over_budget():
+            return None, elapsed_ms()
         new_budget = int(req.budget_won * mult)
         if new_budget > _BUDGET_MAX or new_budget == req.budget_won:
             continue
         alt_req = req.model_copy(update={"budget_won": new_budget})
         result = solve_once(graph, alt_req)
         if _is_solved(result):
-            return _build_alternative(alt_req, "예산 증가"), result
+            return (_build_alternative(alt_req, "예산 증가"), result), elapsed_ms()
 
     # 전략 2: 여행 기간 연장
     for extra in _EXTRA_DAYS_SIMPLE:
+        if over_budget():
+            return None, elapsed_ms()
         new_days = req.deadline_days + extra
         if new_days > _DEADLINE_MAX:
             continue
         alt_req = req.model_copy(update={"deadline_days": new_days})
         result = solve_once(graph, alt_req)
         if _is_solved(result):
-            return _build_alternative(alt_req, "여행 기간 연장"), result
+            return (
+                _build_alternative(alt_req, "여행 기간 연장"),
+                result,
+            ), elapsed_ms()
 
     # 전략 3: 사용자 선택 일부 제외 (user_selected 비어있으면 skip)
     if user_selected:
         for remove_count in range(1, len(user_selected)):
             for removed_tuple in combinations(user_selected, remove_count):
+                if over_budget():
+                    return None, elapsed_ms()
                 removed = set(removed_tuple)
                 alt_req = _reduce_selection(req, removed)
                 result = solve_once(graph, alt_req)
                 if _is_solved(result):
                     label = f"선택 도시 일부 제외: {list(removed_tuple)} 제외"
-                    return _build_alternative(alt_req, label), result
+                    return (
+                        _build_alternative(alt_req, label),
+                        result,
+                    ), elapsed_ms()
 
     # 전략 4: 복합 (예산 x 기간 x 도시 제외) — user_selected 비어있으면 skip
     if user_selected:
@@ -98,6 +132,8 @@ def find_alternative(
                     continue
                 for remove_count in range(0, len(user_selected)):
                     for removed_tuple in combinations(user_selected, remove_count):
+                        if over_budget():
+                            return None, elapsed_ms()
                         removed = set(removed_tuple)
                         reduced = _reduce_selection(req, removed)
                         alt_req = reduced.model_copy(
@@ -112,9 +148,12 @@ def find_alternative(
                                 f"복합 조건 완화: 예산 {mult:.1f}배, "
                                 f"{extra}일 연장, {list(removed_tuple)} 제외"
                             )
-                            return _build_alternative(alt_req, label), result
+                            return (
+                                _build_alternative(alt_req, label),
+                                result,
+                            ), elapsed_ms()
 
-    return None
+    return None, elapsed_ms()
 
 
 def _is_solved(r: OptimizeResult) -> bool:
