@@ -179,7 +179,7 @@ function PageInner() {
                 alternative={result.alternative}
                 requestBudget={params.budget_won}
                 requestDeadline={params.deadline_days}
-                requestRequiredCountries={isFull || selectedHubs.length === 0 ? null : selectedHubs}
+                requestRequiredCountries={isFull ? null : selectedHubs}
                 requestRequiredCities={isFull ? null : requiredCities}
                 requestStayDays={stayDays}
                 onApplyAlternative={() => applyAlternative(result.alternative!)}
