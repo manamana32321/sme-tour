@@ -15,8 +15,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 사용자가 투입 가능한 한정된 자원(시간 및 예산) 내에서 개별 관광지에 대한 선호도를 가장 효율적으로 충족시킬 수 있는 **지능형 유럽 여행 경로 설계 알고리즘** + 웹 인터페이스.
 
-- **MVP A (현재)**: 15개국 허브 + 내륙 도시를 Clustered TSP로 완주하는 경로 탐색
-- **Phase 3 (향후)**: 자원 부족 시 만족도 극대화 부분집합 경로 (Orienteering Problem)
+- 16개 허브(유럽 15개국 + ICN) Clustered TSP 완주 경로 + 내륙 도시 강제·체류일
+- 방문 모드: "전체 완주" / "선택 방문" 토글
+- 원 조건 infeasible 시 자동 완화 대안 제시 (예산↑ / 기간↑ / 도시↓ / 복합, 25초 wall-clock 안에서 첫 후보)
+- 향후: 자원 부족 시 만족도 극대화 부분집합 경로 (Orienteering Problem)
 
 ## Architecture
 
@@ -27,6 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **GurobiSolver** (우선): 상용 MIP + DFJ lazy callback. 0.1초. WLS Academic License 환경변수 3개 필요.
 - **OrToolsSolver** (fallback): OR-Tools CP-SAT + Iterative DFJ. ~5초. Gurobi 미설치 시 자동 전환.
 - `get_solver()` factory가 Gurobi → OR-Tools 자동 분기.
+- `BaseSolver.solve()`는 원 조건 infeasible 시 `find_alternative`(4단계 완화)로 자동 재탐색. 전체 wall-clock 예산 25초 초과 시 즉시 종료해 프론트 timeout(35초) 안쪽 보장.
 
 ### Objective Function
 
@@ -66,8 +69,14 @@ min Z = W_cost · (Σcost·x / Budget) + W_time · (Σtime·x / Deadline)
 ```bash
 # 엔진 로컬 개발
 cd engine && uv venv --python 3.12 && uv pip install -e '.[dev]'
-uv run pytest -v
+uv run pytest -v                              # 109 tests
+uv run ruff check src/ tests/
 uv run uvicorn src.main:app --reload --port 8000
+
+# 프론트엔드 로컬 개발 (.env.local에 NEXT_PUBLIC_API_BASE=http://localhost:8000)
+cd frontend && pnpm install
+pnpm dev --port 3000
+pnpm build                                    # 프로덕션 빌드 검증
 
 # 최적 경로 호출
 curl -s -X POST http://localhost:8000/optimize \
@@ -95,6 +104,10 @@ cd engine && python collectors/collect_flights.py --date 2026-07-01
 
 - main 직접 커밋 금지 — PR 통해서만
 - 브랜치 작업은 worktree 사용: `~/sme-tour-worktrees/{브랜치명}/`
+- 브랜치명: Conventional Commits 타입 + 케밥 (`feat/...`, `fix/...`, `docs/...`)
+- PR 머지: squash 권장. 본문에 `Closes #N` 키워드로 이슈 자동 close
+- 코드 참조는 commit SHA permalink (`blob/<sha>/path#Lx-Ly`)
+- 자기 PR이면 `--assignee @me`
 
 ### Notion MCP
 
