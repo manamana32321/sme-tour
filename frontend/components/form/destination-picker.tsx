@@ -94,7 +94,7 @@ export function DestinationPicker({
       <p className="text-xs text-muted-foreground">
         {isSelect
           ? "방문할 곳을 직접 고르세요. 고르지 않은 곳은 경로에 따라 자유 선택됩니다."
-          : "15개국 45개 도시를 모두 방문합니다. 아래에서 체류일만 설정하세요."}
+          : "한국에서 출발해 유럽 15개국 45개 도시를 모두 방문하고 한국으로 돌아옵니다. 아래에서 체류일만 설정하세요."}
       </p>
 
       <div className="space-y-1">
