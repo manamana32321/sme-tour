@@ -20,8 +20,10 @@ class TestLoadDefaultGraph:
         assert AIRPLANE_CSV.exists(), f"Missing: {AIRPLANE_CSV}"
         assert CITY_CSV.exists(), f"Missing: {CITY_CSV}"
 
-    def test_hubs_are_15(self, graph) -> None:
-        assert len(graph.hubs) == 15
+    def test_hubs_count(self, graph) -> None:
+        # 유럽 15개국 허브 + 한국(ICN, 출발/도착) = 16개
+        assert len(graph.hubs) == 16
+        assert "ICN" in graph.hubs
 
     def test_internal_cities_exist(self, graph) -> None:
         assert len(graph.internal_cities) > 0
@@ -40,7 +42,7 @@ class TestLoadDefaultGraph:
 
     def test_has_hub_stay_edges(self, graph) -> None:
         stay = graph.edges_by_category("hub_stay")
-        assert len(stay) == 15  # one per hub
+        assert len(stay) == 16  # one per hub (ICN 포함)
 
     def test_scale_factor_default(self, graph) -> None:
         assert graph.scale_factor == 10_000

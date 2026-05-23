@@ -3,7 +3,7 @@
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { HUBS } from "@/lib/hubs";
+import { EUROPEAN_HUB_LIST, EUROPEAN_IATA_CODES, HUBS } from "@/lib/hubs";
 import { CITY_BY_NODE } from "@/lib/cities";
 import { formatKRW } from "@/lib/format";
 import type { Alternative } from "@/lib/schemas";
@@ -12,7 +12,7 @@ interface AlternativeBannerProps {
   alternative: Alternative;
   requestBudget: number;
   requestDeadline: number;
-  /** 원 요청의 방문 필수 국가 (mode=full이면 null = 전체 15개국). */
+  /** 원 요청의 방문 필수 국가 (mode=full이면 null = 전체 유럽 허브). */
   requestRequiredCountries: string[] | null;
   /** 원 요청의 방문 필수 도시 (없으면 null). */
   requestRequiredCities: string[] | null;
@@ -110,10 +110,10 @@ function collectDiffs(alt: Alternative, req: RequestSnapshot): Diff[] {
     });
   }
 
-  // mode=full(원 요청 null) → 전체 15개국. 대안이 subset이면 줄어든 것.
-  const beforeCountries = req.requestRequiredCountries ?? Object.keys(HUBS);
+  // mode=full(원 요청 null) → 전체 유럽 허브. ICN(출발/도착 전용)은 카운트 제외.
+  const beforeCountries = req.requestRequiredCountries ?? EUROPEAN_IATA_CODES;
   const appliedCountries =
-    alt.applied_required_countries ?? Object.keys(HUBS);
+    alt.applied_required_countries ?? EUROPEAN_IATA_CODES;
   if (!sameSet(beforeCountries, appliedCountries)) {
     out.push({
       label: "방문 국가",
@@ -162,7 +162,7 @@ function sameStayDays(
 
 function formatCountryList(iatas: string[]): string {
   if (iatas.length === 0) return "없음";
-  if (iatas.length === Object.keys(HUBS).length) return "전체 15개국";
+  if (iatas.length === EUROPEAN_HUB_LIST.length) return `전체 ${EUROPEAN_HUB_LIST.length}개국`;
   const names = iatas
     .map((iata) => HUBS[iata]?.country_kr ?? iata)
     .slice(0, 4);

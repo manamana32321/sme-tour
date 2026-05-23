@@ -44,7 +44,7 @@ function PageInner() {
   const [params, setParams] = useQueryStates({
     budget_won: parseAsInteger.withDefault(10_000_000),
     deadline_days: parseAsInteger.withDefault(14),
-    start_hub: parseAsString.withDefault("CDG"),
+    start_hub: parseAsString.withDefault("ICN"),
     w_cost: parseAsFloat.withDefault(0.5),
   });
 

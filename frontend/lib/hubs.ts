@@ -1,4 +1,4 @@
-/** 15개국 허브 공항 상수. 변동 없으므로 프론트 하드코딩. */
+/** 허브 공항 상수 — 유럽 15개국 + 한국(ICN, 출발/도착). 프론트 하드코딩. */
 
 export interface Hub {
   iata: string;
@@ -10,6 +10,7 @@ export interface Hub {
 }
 
 export const HUBS: Record<string, Hub> = {
+  ICN: { iata: "ICN", country_kr: "한국", city_kr: "인천", flag: "🇰🇷", lat: 37.4602, lon: 126.4407 },
   CDG: { iata: "CDG", country_kr: "프랑스", city_kr: "파리", flag: "🇫🇷", lat: 49.0097, lon: 2.5479 },
   FCO: { iata: "FCO", country_kr: "이탈리아", city_kr: "로마", flag: "🇮🇹", lat: 41.8003, lon: 12.2389 },
   ZRH: { iata: "ZRH", country_kr: "스위스", city_kr: "취리히", flag: "🇨🇭", lat: 47.4647, lon: 8.5492 },
@@ -29,3 +30,12 @@ export const HUBS: Record<string, Hub> = {
 
 export const HUB_LIST = Object.values(HUBS);
 export const IATA_CODES = Object.keys(HUBS);
+
+/** 출발/도착 전용 허브 (한국). 방문지 카운트·UI 라벨에서 제외. */
+export const DEPARTURE_HUBS = ["ICN"] as const;
+
+/** 유럽 방문 대상 허브 — 카운트 문자열·"전체 N개국" 표현에 사용. */
+export const EUROPEAN_HUB_LIST = HUB_LIST.filter(
+  (h) => !(DEPARTURE_HUBS as readonly string[]).includes(h.iata),
+);
+export const EUROPEAN_IATA_CODES = EUROPEAN_HUB_LIST.map((h) => h.iata);
