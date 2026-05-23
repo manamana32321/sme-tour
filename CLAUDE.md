@@ -119,8 +119,3 @@ cd engine && python collectors/collect_flights.py --date 2026-07-01
 - **설계 문서**: [docs/superpowers/specs/2026-04-09-sme-tour-web-mvp-a-design.md](docs/superpowers/specs/2026-04-09-sme-tour-web-mvp-a-design.md)
 - **구현 계획**: [docs/superpowers/plans/2026-04-09-sme-tour-web-mvp-a.md](docs/superpowers/plans/2026-04-09-sme-tour-web-mvp-a.md)
 - **Gurobi WLS**: [Academic Free Tier](https://www.gurobi.com/academia/)
-
-## Known Issues / TODOs
-
-- [ ] **Gurobi WLS 라이센스 발급**: OR-Tools fallback으로 동작 중 (~5초). WLS 발급 시 0.1초로 개선.
-- [ ] **OR-Tools 성능 튜닝**: solver.parameters, 초기해 전략 개선 여지.
