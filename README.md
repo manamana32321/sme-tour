@@ -4,7 +4,7 @@
 
 시스템경영공학 종합설계 5조 프로젝트.
 
-**[https://sme-tour.json-server.win](https://sme-tour.json-server.win)**
+> **운용 종료** — 발표를 마쳐 배포를 내렸다. 호스팅(Vercel·K3s)과 도메인은 모두 제거됐고, 이 레포는 코드 기록으로만 남는다. 아래 로컬 개발 절차로는 그대로 실행할 수 있다.
 
 ## 주요 기능
 
@@ -25,17 +25,14 @@
 |---|---|
 | **프론트엔드** | Next.js 16, Tailwind CSS, shadcn/ui (base-nova), Leaflet, nuqs, next-themes |
 | **백엔드** | FastAPI, OR-Tools CP-SAT (Gurobi fallback) |
-| **인프라** | Vercel (프론트), K3s + ArgoCD (엔진), Cloudflare DNS |
-| **CI/CD** | GitHub Actions → GHCR → ArgoCD Image Updater |
 
 ## 아키텍처
 
 ```
-사용자 브라우저
-  → Vercel (Next.js SSR/CSR)
-    → https://api.sme-tour.json-server.win (FastAPI)
-      → OR-Tools CP-SAT Iterative DFJ solver
-        → 최적 경로 JSON 응답
+브라우저 (Next.js SSR/CSR)
+  → FastAPI
+    → OR-Tools CP-SAT Iterative DFJ solver
+      → 최적 경로 JSON 응답
 ```
 
 ## 로컬 개발

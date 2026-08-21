@@ -46,23 +46,16 @@ min Z = W_cost · (Σcost·x / Budget) + W_time · (Σtime·x / Deadline)
 - **`Airplane dataset.csv`** (25K rows): `origin_iata`, `dest_iata`, `carriers`, `price_eur_won`, `duration_minutes`
 - **`city dataset.csv`** (157 rows): `origin_node`, `destination_node`, `transport_mode`, `price_won`, `duration_min`
 
-## Deployment
+## 운용 종료
 
-| 서비스 | URL | 호스팅 |
-|---|---|---|
-| 프론트엔드 | <https://sme-tour.json-server.win> | Vercel |
-| 엔진 API | <https://api.sme-tour.json-server.win> | 홈랩 K3s |
+발표 종료로 배포를 모두 내렸다 (2026-08-21).
 
-- **엔진**: `engine/` 변경 → GHA → GHCR push → ArgoCD Image Updater → K3s 자동 롤아웃
-- **프론트**: `frontend/` 변경 → Vercel 자동 배포 (rootDirectory=`frontend`)
-- **K8s**: `k8s/` 변경 → ArgoCD 자동 sync (ns: `sme-tour`)
-- **DNS**: 홈랩 repo `cloudflare/dns.tf` → terraform apply
+- Vercel 프로젝트 `terraform destroy` 완료 — `sme-tour.json-server.win` 종료
+- 홈랩 K3s ArgoCD Application·namespace 제거 — `api.sme-tour.json-server.win` 종료
+- Cloudflare DNS 레코드 제거
 
-### 인프라 참고
-
-- IngressClass: **traefik** (nginx 아님)
-- TLS: cert-manager `letsencrypt-dns01` ClusterIssuer
-- Vercel CNAME: `proxied=false` 필수 (Vercel SSL 발급 위해)
+배포 관련 디렉토리(`k8s/`, `infra/`)와 GHCR 빌드 워크플로는 이 레포에서 제거했다.
+남은 코드는 로컬 실행만 지원한다.
 
 ## Common Commands
 
